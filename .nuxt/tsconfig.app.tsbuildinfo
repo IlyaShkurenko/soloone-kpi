@@ -1,0 +1,1 @@
+{"root":["./nuxt.d.ts","../app/app.vue","../app/components/kpi/linechart.vue","../app/components/kpi/metricwidget.vue","../app/pages/index.vue","../app/types/kpi.ts"],"version":"5.9.3"}

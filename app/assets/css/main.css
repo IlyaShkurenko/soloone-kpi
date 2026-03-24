@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme static {
+  --font-sans: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+:root {
+  --kpi-bg: #f4efe5;
+  --kpi-ink: #18181b;
+  --kpi-panel: rgba(255, 252, 245, 0.82);
+  --kpi-border: rgba(24, 24, 27, 0.08);
+  --kpi-accent: #0f766e;
+  --kpi-accent-soft: rgba(15, 118, 110, 0.14);
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.16), transparent 34%),
+    linear-gradient(180deg, #f8f4ec 0%, #f1ece2 100%);
+  color: var(--kpi-ink);
+}
+
+.kpi-shell {
+  min-height: 100vh;
+}
+
+.kpi-panel {
+  background: var(--kpi-panel);
+  border: 1px solid var(--kpi-border);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 50px rgba(24, 24, 27, 0.08);
+}
+
+.kpi-label {
+  color: rgba(24, 24, 27, 0.62);
+}
+
+.kpi-grid {
+  background-image:
+    linear-gradient(to right, rgba(24, 24, 27, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 24, 27, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent);
+}

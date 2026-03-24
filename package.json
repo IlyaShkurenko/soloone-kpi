@@ -1,0 +1,27 @@
+{
+  "name": "soloone-kpi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "PORT=9003 nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.82",
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@nuxt/eslint": "^1.12.1",
+    "eslint": "^9.39.2",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.2.1"
+  },
+  "packageManager": "pnpm@10.26.1"
+}
