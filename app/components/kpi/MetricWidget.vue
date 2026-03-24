@@ -81,7 +81,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
         >
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Headline</p>
           <p class="text-2xl font-semibold mt-2">{{ formatDuration(data.summary.averageHours) }}</p>
-          <p class="text-sm text-white/72 mt-1">Avg time from estimated onboarding completion to first AI reply</p>
+          <p class="text-sm text-white/72 mt-1">Avg time from signup to first AI reply</p>
         </div>
       </div>
     </div>
@@ -119,9 +119,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
               <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Trend</p>
               <h3 class="text-lg font-semibold text-zinc-950">Average time by signup cohort</h3>
             </div>
-            <p class="text-sm text-zinc-500">
-              Start point = signup + {{ data.onboardingOffsetMinutes }}m estimated onboarding buffer
-            </p>
+            <p class="text-sm text-zinc-500">Start point = signup timestamp</p>
           </div>
 
           <KpiLineChart

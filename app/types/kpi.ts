@@ -31,7 +31,6 @@ export interface FirstAiInteractionSeriesPoint {
 export interface FirstAiInteractionMetric {
   metricId: 'first-ai-interaction'
   granularity: 'day' | 'week' | 'month'
-  onboardingOffsetMinutes: number
   filters: {
     startDate: string | null
     endDate: string | null

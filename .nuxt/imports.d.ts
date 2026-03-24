@@ -42,5 +42,4 @@ export { useResizable } from '../node_modules/.pnpm/@nuxt+ui@4.6.0_@tiptap+exten
 export { useScrollShadow } from '../node_modules/.pnpm/@nuxt+ui@4.6.0_@tiptap+extensions@3.20.4_@tiptap+core@3.20.4_@tiptap+pm@3.20.4__@tiptap_5960d897131c88efde171eb4b9fb3871/node_modules/@nuxt/ui/dist/runtime/composables/useScrollShadow';
 export { useScrollspy } from '../node_modules/.pnpm/@nuxt+ui@4.6.0_@tiptap+extensions@3.20.4_@tiptap+core@3.20.4_@tiptap+pm@3.20.4__@tiptap_5960d897131c88efde171eb4b9fb3871/node_modules/@nuxt/ui/dist/runtime/composables/useScrollspy';
 export { useToast } from '../node_modules/.pnpm/@nuxt+ui@4.6.0_@tiptap+extensions@3.20.4_@tiptap+core@3.20.4_@tiptap+pm@3.20.4__@tiptap_5960d897131c88efde171eb4b9fb3871/node_modules/@nuxt/ui/dist/runtime/composables/useToast';
-export { useNuxtDevTools } from '../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@7.3.1_@types+node@22.19.15_jiti@2.6.1_lightningcss@1.32.0_ter_9da053068863242265b52e9a05e6816d/node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';
 export { useColorMode } from '../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/@nuxtjs/color-mode/dist/runtime/composables';

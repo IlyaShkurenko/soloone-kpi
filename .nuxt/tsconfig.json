@@ -128,7 +128,7 @@
         "./color-mode-options.mjs"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev.json"
+        "./manifest/meta/3c101a6a-39c3-48e5-b51e-dbde78f395ae.json"
       ],
       "#components": [
         "./components"

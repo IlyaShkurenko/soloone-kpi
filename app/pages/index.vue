@@ -17,7 +17,7 @@ const availableMetrics: MetricDescriptor[] = [
   {
     id: 'first-ai-interaction',
     label: 'Time to First AI Interaction',
-    description: 'Measures the time from estimated onboarding completion to the first successful AI-generated outgoing message.'
+    description: 'Measures the time from user signup to the first successful AI-generated outgoing message.'
   }
 ]
 

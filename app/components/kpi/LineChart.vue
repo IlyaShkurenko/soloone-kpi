@@ -6,9 +6,10 @@ const props = defineProps<{
 
 const width = 760
 const height = 240
-const padding = { top: 18, right: 16, bottom: 36, left: 16 }
+const padding = { top: 18, right: 16, bottom: 36, left: 52 }
 const innerWidth = width - padding.left - padding.right
 const innerHeight = height - padding.top - padding.bottom
+const hoveredPointIndex = ref<number | null>(null)
 
 const validPoints = computed(() =>
   props.points
@@ -92,10 +93,29 @@ const axisLabels = computed(() => {
 const formatter = computed(() =>
   props.valueFormatter ?? ((value: number) => `${Math.round(value * 10) / 10}h`)
 )
+
+const hoveredPoint = computed(() => {
+  if (hoveredPointIndex.value === null) {
+    return null
+  }
+
+  const point = props.points[hoveredPointIndex.value]
+  if (!point || point.value === null || !Number.isFinite(point.value)) {
+    return null
+  }
+
+  return {
+    label: point.label,
+    value: point.value,
+    left: `${(getX(hoveredPointIndex.value) / width) * 100}%`,
+    top: `${(getY(point.value) / height) * 100}%`,
+    placeBelow: getY(point.value) <= padding.top + 28
+  }
+})
 </script>
 
 <template>
-  <div class="w-full rounded-2xl border border-black/8 bg-white/70 overflow-hidden">
+  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-hidden">
     <div
       v-if="validPoints.length === 0"
       class="h-60 flex items-center justify-center text-sm text-zinc-500"
@@ -103,14 +123,24 @@ const formatter = computed(() =>
       No data for the selected filters.
     </div>
 
-    <svg
-      v-else
-      :viewBox="`0 0 ${width} ${height}`"
-      class="w-full h-60"
-      preserveAspectRatio="none"
-      role="img"
-      aria-label="Metric trend chart"
-    >
+    <template v-else>
+      <div
+        v-if="hoveredPoint"
+        class="pointer-events-none absolute z-10 -translate-x-1/2 rounded-xl bg-zinc-950 px-3 py-2 text-white shadow-lg"
+        :class="hoveredPoint.placeBelow ? 'translate-y-[14px]' : '-translate-y-[calc(100%+14px)]'"
+        :style="{ left: hoveredPoint.left, top: hoveredPoint.top }"
+      >
+        <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">{{ hoveredPoint.label }}</p>
+        <p class="text-sm font-medium mt-1">{{ formatter(hoveredPoint.value) }}</p>
+      </div>
+
+      <svg
+        :viewBox="`0 0 ${width} ${height}`"
+        class="w-full h-60"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Metric trend chart"
+      >
       <defs>
         <linearGradient id="kpi-line-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="rgba(15, 118, 110, 0.36)" />
@@ -148,46 +178,63 @@ const formatter = computed(() =>
         stroke-linejoin="round"
       />
 
-      <circle
-        v-for="point in validPoints"
-        :key="point.index"
-        :cx="getX(point.index)"
-        :cy="getY(point.value as number)"
-        r="4"
-        fill="#0f766e"
-        stroke="white"
-        stroke-width="2"
-      />
+        <text
+          :x="padding.left - 8"
+          :y="padding.top - 2"
+          fill="rgba(24, 24, 27, 0.58)"
+          font-size="12"
+          text-anchor="end"
+        >
+          {{ formatter(maxValue) }}
+        </text>
 
-      <text
-        :x="padding.left"
-        :y="padding.top - 2"
-        fill="rgba(24, 24, 27, 0.58)"
-        font-size="12"
-      >
-        {{ formatter(maxValue) }}
-      </text>
+        <text
+          :x="padding.left - 8"
+          :y="padding.top + innerHeight + 14"
+          fill="rgba(24, 24, 27, 0.58)"
+          font-size="12"
+          text-anchor="end"
+        >
+          {{ formatter(minValue) }}
+        </text>
 
-      <text
-        :x="padding.left"
-        :y="padding.top + innerHeight + 14"
-        fill="rgba(24, 24, 27, 0.58)"
-        font-size="12"
-      >
-        {{ formatter(minValue) }}
-      </text>
+        <g
+          v-for="point in validPoints"
+          :key="point.index"
+        >
+          <circle
+            :cx="getX(point.index)"
+            :cy="getY(point.value as number)"
+            r="12"
+            fill="transparent"
+            class="cursor-pointer"
+            @mouseenter="hoveredPointIndex = point.index"
+            @mouseleave="hoveredPointIndex = null"
+          />
 
-      <text
-        v-for="axisLabel in axisLabels"
-        :key="`${axisLabel.label}-${axisLabel.x}`"
-        :x="axisLabel.x"
-        :y="height - 10"
-        fill="rgba(24, 24, 27, 0.58)"
-        font-size="12"
-        text-anchor="middle"
-      >
-        {{ axisLabel.label }}
-      </text>
-    </svg>
+          <circle
+            :cx="getX(point.index)"
+            :cy="getY(point.value as number)"
+            r="4"
+            fill="#0f766e"
+            stroke="white"
+            stroke-width="2"
+            class="pointer-events-none"
+          />
+        </g>
+
+        <text
+          v-for="axisLabel in axisLabels"
+          :key="`${axisLabel.label}-${axisLabel.x}`"
+          :x="axisLabel.x"
+          :y="height - 10"
+          fill="rgba(24, 24, 27, 0.58)"
+          font-size="12"
+          text-anchor="middle"
+        >
+          {{ axisLabel.label }}
+        </text>
+      </svg>
+    </template>
   </div>
 </template>

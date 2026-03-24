@@ -128,7 +128,7 @@
         "./color-mode-options.mjs"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev.json"
+        "./manifest/meta/3c101a6a-39c3-48e5-b51e-dbde78f395ae.json"
       ],
       "#components": [
         "./components"
@@ -232,7 +232,7 @@
     "../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/dist/runtime/server",
     "../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/*.*",
     "../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/dist/*.*",
-    "dev",
+    "../.output",
     "../server"
   ],
   "vueCompilerOptions": {
