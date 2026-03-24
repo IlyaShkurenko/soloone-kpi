@@ -1,1 +1,0 @@
-export { default } from "file:///Users/illiashkurenko/soloone/soloone-kpi/node_modules/.pnpm/@nuxt+vite-builder@4.4.2_@babel+plugin-syntax-jsx@7.28.6_@babel+core@7.29.0__@types+nod_544647e01b29f880a7a1cf3e517578a6/node_modules/@nuxt/vite-builder/dist/vite-node-runner.mjs"
