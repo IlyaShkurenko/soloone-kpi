@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type {
+  DurationMetric,
   FirstAiInteractionMetric,
+  FirstTransactionMetric,
   KpiUserOption,
   MetricDescriptor
 } from '~/types/kpi'
@@ -8,7 +10,7 @@ import type {
 type MetricState = {
   loading: boolean
   error: string | null
-  data: FirstAiInteractionMetric | null
+  data: DurationMetric | null
 }
 
 const config = useRuntimeConfig()
@@ -17,7 +19,18 @@ const availableMetrics: MetricDescriptor[] = [
   {
     id: 'first-ai-interaction',
     label: 'Time to First AI Interaction',
-    description: 'Measures the time from user signup to the first successful AI-generated outgoing message.'
+    description: 'Measures the time from user signup to the first successful AI-generated outgoing message.',
+    headlineDescription: 'Avg time from signup to first AI reply',
+    trendTitle: 'Average time by signup cohort',
+    trendHint: 'Start point = signup timestamp'
+  },
+  {
+    id: 'first-transaction',
+    label: 'Time to First Transaction',
+    description: 'Measures the time from user signup to the first completed provider revenue transaction.',
+    headlineDescription: 'Avg time from signup to first completed revenue event',
+    trendTitle: 'Average time to first revenue by signup cohort',
+    trendHint: 'Revenue types = gift, booking payment'
   }
 ]
 
@@ -34,7 +47,7 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['first-ai-interaction'])
+const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
@@ -42,6 +55,11 @@ const activePreset = ref<string>('90d')
 
 const metricStates = reactive<Record<string, MetricState>>({
   'first-ai-interaction': {
+    loading: false,
+    error: null,
+    data: null
+  },
+  'first-transaction': {
     loading: false,
     error: null,
     data: null
@@ -179,10 +197,35 @@ async function fetchFirstAiInteractionMetric() {
   }
 }
 
+async function fetchFirstTransactionMetric() {
+  const state = metricStates['first-transaction']!
+  state.loading = true
+  state.error = null
+
+  try {
+    state.data = await $fetch<FirstTransactionMetric>(
+      `${config.public.apiBase}/api/kpi/metrics/first-transaction`,
+      {
+        query: buildMetricQuery()
+      }
+    )
+  } catch (error: any) {
+    state.error = error?.data?.error || error?.message || 'Failed to load metric'
+    state.data = null
+  } finally {
+    state.loading = false
+  }
+}
+
 async function refreshMetrics() {
   const loaders = selectedMetricIds.value.map(async (metricId) => {
     if (metricId === 'first-ai-interaction') {
       await fetchFirstAiInteractionMetric()
+      return
+    }
+
+    if (metricId === 'first-transaction') {
+      await fetchFirstTransactionMetric()
     }
   })
 

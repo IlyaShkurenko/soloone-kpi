@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { FirstAiInteractionMetric, MetricDescriptor } from '~/types/kpi'
+import type { DurationMetric, MetricDescriptor } from '~/types/kpi'
 
 const props = defineProps<{
   descriptor: MetricDescriptor
-  data: FirstAiInteractionMetric | null
+  data: DurationMetric | null
   loading?: boolean
   error?: string | null
 }>()
@@ -35,7 +35,7 @@ const summaryItems = computed(() => {
     { label: 'Min', value: formatDuration(props.data.summary.minHours) },
     { label: 'Max', value: formatDuration(props.data.summary.maxHours) },
     { label: 'Coverage', value: formatPercent(props.data.summary.coverageRate) },
-    { label: 'Users', value: `${props.data.summary.usersWithAiInteraction}/${props.data.summary.totalUsers}` }
+    { label: 'Users', value: `${props.data.summary.usersWithMetric}/${props.data.summary.totalUsers}` }
   ]
 })
 
@@ -81,7 +81,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
         >
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Headline</p>
           <p class="text-2xl font-semibold mt-2">{{ formatDuration(data.summary.averageHours) }}</p>
-          <p class="text-sm text-white/72 mt-1">Avg time from signup to first AI reply</p>
+          <p class="text-sm text-white/72 mt-1">{{ descriptor.headlineDescription }}</p>
         </div>
       </div>
     </div>
@@ -117,9 +117,9 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Trend</p>
-              <h3 class="text-lg font-semibold text-zinc-950">Average time by signup cohort</h3>
+              <h3 class="text-lg font-semibold text-zinc-950">{{ descriptor.trendTitle }}</h3>
             </div>
-            <p class="text-sm text-zinc-500">Start point = signup timestamp</p>
+            <p class="text-sm text-zinc-500">{{ descriptor.trendHint }}</p>
           </div>
 
           <KpiLineChart

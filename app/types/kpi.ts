@@ -7,11 +7,14 @@ export interface MetricDescriptor {
   id: string
   label: string
   description: string
+  headlineDescription: string
+  trendTitle: string
+  trendHint: string
 }
 
-export interface FirstAiInteractionSummary {
+export interface DurationMetricSummary {
   totalUsers: number
-  usersWithAiInteraction: number
+  usersWithMetric: number
   coverageRate: number
   averageHours: number | null
   medianHours: number | null
@@ -19,7 +22,7 @@ export interface FirstAiInteractionSummary {
   maxHours: number | null
 }
 
-export interface FirstAiInteractionSeriesPoint {
+export interface DurationMetricSeriesPoint {
   bucketStart: string
   averageHours: number | null
   medianHours: number | null
@@ -28,14 +31,17 @@ export interface FirstAiInteractionSeriesPoint {
   users: number
 }
 
-export interface FirstAiInteractionMetric {
-  metricId: 'first-ai-interaction'
+export interface DurationMetric<MetricId extends string = string> {
+  metricId: MetricId
   granularity: 'day' | 'week' | 'month'
   filters: {
     startDate: string | null
     endDate: string | null
     userIds: string[]
   }
-  summary: FirstAiInteractionSummary
-  series: FirstAiInteractionSeriesPoint[]
+  summary: DurationMetricSummary
+  series: DurationMetricSeriesPoint[]
 }
+
+export type FirstAiInteractionMetric = DurationMetric<'first-ai-interaction'>
+export type FirstTransactionMetric = DurationMetric<'first-transaction'>
