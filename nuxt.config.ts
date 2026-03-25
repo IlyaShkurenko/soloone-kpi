@@ -16,6 +16,13 @@ export default defineNuxtConfig({
     }
   },
 
+  colorMode: {
+    preference: 'system',
+    fallback: 'light',
+    storageKey: 'soloone-kpi-color-mode',
+    classSuffix: ''
+  },
+
   devServer: {
     port: 9003,
     host: '0.0.0.0'

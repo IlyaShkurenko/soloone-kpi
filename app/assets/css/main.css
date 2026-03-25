@@ -52,12 +52,42 @@
   --kpi-border: rgba(24, 24, 27, 0.08);
 }
 
+.dark {
+  --ui-primary: var(--color-teal-400);
+  --ui-bg: #071212;
+  --ui-bg-muted: #0b1717;
+  --ui-bg-elevated: #0e1d1d;
+  --ui-bg-accented: #113131;
+  --ui-bg-inverted: white;
+  --ui-text: #F4F4F5;
+  --ui-text-muted: #A1A1AA;
+  --ui-text-dimmed: #71717A;
+  --ui-text-highlighted: white;
+  --ui-text-inverted: #0A0A0A;
+  --ui-border: rgba(244, 244, 245, 0.12);
+  --ui-border-muted: rgba(244, 244, 245, 0.08);
+  --ui-border-accented: rgba(244, 244, 245, 0.18);
+  --ui-border-inverted: white;
+
+  --kpi-ink: #F4F4F5;
+  --kpi-panel: rgba(9, 18, 18, 0.82);
+  --kpi-border: rgba(244, 244, 245, 0.08);
+}
+
 body {
   min-height: 100vh;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(20, 184, 166, 0.12) 0%, transparent 52%),
     linear-gradient(180deg, var(--color-teal-50) 0%, #FAFCFC 38%, white 100%);
   color: var(--kpi-ink);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.dark body {
+  background:
+    radial-gradient(ellipse 75% 48% at 50% 0%, rgba(45, 212, 191, 0.18) 0%, transparent 48%),
+    linear-gradient(180deg, #041010 0%, #071414 35%, #0A1111 100%);
+  color-scheme: dark;
 }
 
 .kpi-shell {
@@ -84,4 +114,99 @@ body {
     linear-gradient(to bottom, rgba(20, 184, 166, 0.05) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent);
+}
+
+.dark .kpi-label {
+  color: rgba(228, 228, 231, 0.66);
+}
+
+.dark .kpi-grid {
+  background-image:
+    linear-gradient(to right, rgba(45, 212, 191, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(45, 212, 191, 0.08) 1px, transparent 1px);
+}
+
+.dark .bg-white\/78,
+.dark .bg-white\/72,
+.dark .bg-white\/70,
+.dark .bg-white\/68,
+.dark .bg-white\/60 {
+  background-color: rgba(15, 23, 23, 0.78) !important;
+}
+
+.dark .bg-zinc-100\/70 {
+  background-color: rgba(24, 24, 27, 0.78) !important;
+}
+
+.dark .hover\:bg-zinc-100\/80:hover {
+  background-color: rgba(24, 24, 27, 0.82) !important;
+}
+
+.dark .border-black\/6 {
+  border-color: rgba(244, 244, 245, 0.06) !important;
+}
+
+.dark .border-black\/8 {
+  border-color: rgba(244, 244, 245, 0.08) !important;
+}
+
+.dark .border-black\/10 {
+  border-color: rgba(244, 244, 245, 0.1) !important;
+}
+
+.dark .border-black\/12 {
+  border-color: rgba(244, 244, 245, 0.12) !important;
+}
+
+.dark .border-black\/20 {
+  border-color: rgba(244, 244, 245, 0.2) !important;
+}
+
+.dark .text-zinc-950 {
+  color: rgb(250 250 250) !important;
+}
+
+.dark .text-zinc-900,
+.dark .text-zinc-800 {
+  color: rgb(228 228 231) !important;
+}
+
+.dark .text-zinc-700,
+.dark .text-zinc-600,
+.dark .text-zinc-500 {
+  color: rgb(161 161 170) !important;
+}
+
+.dark .text-zinc-400 {
+  color: rgb(113 113 122) !important;
+}
+
+.dark .text-teal-700 {
+  color: rgb(94 234 212) !important;
+}
+
+.dark .bg-rose-50 {
+  background-color: rgba(76, 5, 25, 0.38) !important;
+}
+
+.dark .border-rose-200 {
+  border-color: rgba(251, 113, 133, 0.28) !important;
+}
+
+.dark .text-rose-700 {
+  color: rgb(253 164 175) !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: rgb(244 244 245);
+}
+
+.dark input[type="date"] {
+  color-scheme: dark;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9);
 }

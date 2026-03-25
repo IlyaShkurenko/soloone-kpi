@@ -19,6 +19,7 @@ type MetricState = {
 }
 
 const config = useRuntimeConfig()
+const colorMode = useColorMode()
 
 const availableMetrics: MetricDescriptor[] = [
   {
@@ -533,20 +534,47 @@ onMounted(async () => {
               </p>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-3 min-w-full xl:min-w-[520px] xl:max-w-[560px]">
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-4 py-4">
-                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Metrics Selected</p>
-                <p class="text-2xl font-semibold mt-2">{{ selectedMetricIds.length }}</p>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 min-w-full xl:min-w-[760px] xl:max-w-[820px]">
+              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
+                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Metrics</p>
+                <div class="flex items-start justify-center">
+                  <p class="text-4xl font-semibold tracking-tight tabular-nums leading-none">{{ selectedMetricIds.length }}</p>
+                </div>
               </div>
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-4 py-4">
+              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
                 <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Users in Scope</p>
-                <p class="text-2xl font-semibold mt-2">{{ selectedUserIds.length }}</p>
+                <div class="flex items-start justify-center">
+                  <p class="text-4xl font-semibold tracking-tight tabular-nums leading-none">{{ selectedUserIds.length }}</p>
+                </div>
               </div>
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-4 py-4">
+              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
                 <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Range</p>
-                <p class="text-base font-semibold mt-2">
-                  {{ activePreset === 'custom' ? 'Custom' : activePreset.toUpperCase() }}
-                </p>
+                <div class="flex items-start justify-center">
+                  <p class="text-4xl font-semibold tracking-tight tabular-nums leading-none">
+                    {{ activePreset === 'custom' ? 'Custom' : activePreset.toUpperCase() }}
+                  </p>
+                </div>
+              </div>
+              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
+                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Theme</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                  <UButton
+                    size="xs"
+                    color="neutral"
+                    :variant="colorMode.value === 'light' && colorMode.preference !== 'dark' ? 'solid' : 'outline'"
+                    @click="colorMode.preference = 'light'"
+                  >
+                    Light
+                  </UButton>
+                  <UButton
+                    size="xs"
+                    color="neutral"
+                    :variant="colorMode.value === 'dark' && colorMode.preference !== 'light' ? 'solid' : 'outline'"
+                    @click="colorMode.preference = 'dark'"
+                  >
+                    Dark
+                  </UButton>
+                </div>
               </div>
             </div>
           </div>
