@@ -7,7 +7,7 @@ export interface MetricDescriptor {
   id: string
   label: string
   description: string
-  kind: 'duration' | 'decision'
+  kind: 'duration' | 'decision' | 'rate'
   headlineDescription: string
   trendTitle: string
   trendHint: string
@@ -47,6 +47,40 @@ export interface DurationMetric<MetricId extends string = string> {
 
 export type FirstAiInteractionMetric = DurationMetric<'first-ai-interaction'>
 export type FirstTransactionMetric = DurationMetric<'first-transaction'>
+
+export interface AiAutomationRateSummary {
+  totalUsers: number
+  usersWithMetric: number
+  coverageRate: number
+  totalSuccessfulAiReplies: number
+  autoSentReplies: number
+  autoSentRate: number
+  reviewedReplies: number
+  reviewedRate: number
+}
+
+export interface AiAutomationRateSeriesPoint {
+  bucketStart: string
+  users: number
+  userLabels: string[]
+  totalSuccessfulAiReplies: number
+  autoSentReplies: number
+  autoSentRate: number
+  reviewedReplies: number
+  reviewedRate: number
+}
+
+export interface AiAutomationRateMetric {
+  metricId: 'ai-automation-rate'
+  granularity: 'day' | 'week' | 'month'
+  filters: {
+    startDate: string | null
+    endDate: string | null
+    userIds: string[]
+  }
+  summary: AiAutomationRateSummary
+  series: AiAutomationRateSeriesPoint[]
+}
 
 export interface AiResponseDecisionSummary {
   totalUsers: number
@@ -90,4 +124,4 @@ export interface AiResponseDecisionMetric {
   series: AiResponseDecisionSeriesPoint[]
 }
 
-export type KpiMetric = DurationMetric | AiResponseDecisionMetric
+export type KpiMetric = DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric

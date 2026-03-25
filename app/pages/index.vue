@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {
+  AiAutomationRateMetric,
   AiResponseDecisionMetric,
   DurationMetric,
   FirstAiInteractionMetric,
@@ -44,6 +45,15 @@ const availableMetrics: MetricDescriptor[] = [
     headlineDescription: 'Approved as-is share of all recorded review decisions',
     trendTitle: 'Decision mix over time',
     trendHint: '100% stacked by decision outcome'
+  },
+  {
+    id: 'ai-automation-rate',
+    label: 'AI Automation Rate',
+    kind: 'rate',
+    description: 'Tracks the share of recorded successful AI-generated replies that were sent automatically without provider approval.',
+    headlineDescription: 'Auto-sent share of recorded successful AI replies',
+    trendTitle: 'Automation rate over time',
+    trendHint: 'Auto-sent / approved-and-sent AI replies with recorded outcomes'
   }
 ]
 
@@ -60,7 +70,7 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction', 'ai-response-decisions'])
+const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-automation-rate'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
@@ -78,6 +88,11 @@ const metricStates = reactive<Record<string, MetricState>>({
     data: null
   },
   'ai-response-decisions': {
+    loading: false,
+    error: null,
+    data: null
+  },
+  'ai-automation-rate': {
     loading: false,
     error: null,
     data: null
@@ -105,6 +120,10 @@ const durationMetricDescriptors = computed(() =>
 
 const decisionMetricDescriptors = computed(() =>
   selectedMetricDescriptors.value.filter(metric => metric.kind === 'decision')
+)
+
+const rateMetricDescriptors = computed(() =>
+  selectedMetricDescriptors.value.filter(metric => metric.kind === 'rate')
 )
 
 const allUsersSelected = computed(() =>
@@ -267,6 +286,26 @@ async function fetchAiResponseDecisionMetric() {
   }
 }
 
+async function fetchAiAutomationRateMetric() {
+  const state = metricStates['ai-automation-rate']!
+  state.loading = true
+  state.error = null
+
+  try {
+    state.data = await $fetch<AiAutomationRateMetric>(
+      `${config.public.apiBase}/api/kpi/metrics/ai-automation-rate`,
+      {
+        query: buildMetricQuery()
+      }
+    )
+  } catch (error: any) {
+    state.error = error?.data?.error || error?.message || 'Failed to load metric'
+    state.data = null
+  } finally {
+    state.loading = false
+  }
+}
+
 async function refreshMetrics() {
   for (const [metricId, state] of Object.entries(metricStates)) {
     if (!selectedMetricIds.value.includes(metricId)) {
@@ -298,6 +337,11 @@ async function refreshMetrics() {
 
     if (metricId === 'ai-response-decisions') {
       await fetchAiResponseDecisionMetric()
+      return
+    }
+
+    if (metricId === 'ai-automation-rate') {
+      await fetchAiAutomationRateMetric()
     }
   })
 
@@ -317,7 +361,7 @@ function queueRefresh() {
 function getDurationMetricData(metricId: string): DurationMetric | null {
   const data = metricStates[metricId]?.data ?? null
 
-  if (!data || data.metricId === 'ai-response-decisions') {
+  if (!data || data.metricId === 'ai-response-decisions' || data.metricId === 'ai-automation-rate') {
     return null
   }
 
@@ -332,6 +376,16 @@ function getDecisionMetricData(metricId: string): AiResponseDecisionMetric | nul
   }
 
   return data as AiResponseDecisionMetric
+}
+
+function getRateMetricData(metricId: string): AiAutomationRateMetric | null {
+  const data = metricStates[metricId]?.data ?? null
+
+  if (!data || data.metricId !== 'ai-automation-rate') {
+    return null
+  }
+
+  return data as AiAutomationRateMetric
 }
 
 watch([startDate, endDate, selectedUserIds, selectedMetricIds], () => {
@@ -563,6 +617,15 @@ onMounted(async () => {
             :key="metric.id"
             :descriptor="metric"
             :data="getDecisionMetricData(metric.id)"
+            :loading="metricStates[metric.id]?.loading"
+            :error="metricStates[metric.id]?.error"
+          />
+
+          <KpiRateMetricWidget
+            v-for="metric in rateMetricDescriptors"
+            :key="metric.id"
+            :descriptor="metric"
+            :data="getRateMetricData(metric.id)"
             :loading="metricStates[metric.id]?.loading"
             :error="metricStates[metric.id]?.error"
           />
