@@ -30,6 +30,7 @@ export interface DurationMetricSeriesPoint {
   minHours: number | null
   maxHours: number | null
   users: number
+  userLabels: string[]
 }
 
 export interface DurationMetric<MetricId extends string = string> {
@@ -65,6 +66,7 @@ export interface AiResponseDecisionSummary {
 export interface AiResponseDecisionSeriesPoint {
   bucketStart: string
   users: number
+  userLabels: string[]
   totalDecisions: number
   approvedAsIsCount: number
   approvedAsIsRate: number

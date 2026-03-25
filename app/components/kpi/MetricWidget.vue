@@ -46,7 +46,8 @@ const chartPoints = computed(() => {
 
   return props.data.series.map((point) => ({
     label: formatBucketLabel(point.bucketStart, props.data!.granularity),
-    value: point.averageHours
+    value: point.averageHours,
+    userLabels: point.userLabels
   }))
 })
 
@@ -77,7 +78,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
 
         <div
           v-if="data"
-          class="rounded-2xl bg-teal-700 text-white px-4 py-3 min-w-52"
+          class="rounded-2xl bg-teal-700 text-white px-6 py-5 min-w-64"
         >
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Headline</p>
           <p class="text-2xl font-semibold mt-2">{{ formatDuration(data.summary.averageHours) }}</p>

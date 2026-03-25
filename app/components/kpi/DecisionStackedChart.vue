@@ -2,6 +2,7 @@
 const props = defineProps<{
   points: Array<{
     label: string
+    userLabels: string[]
     totalDecisions: number
     approvedAsIsCount: number
     approvedAsIsRate: number
@@ -30,11 +31,38 @@ const hoveredPoint = computed(() => {
     return null
   }
 
-  return props.points[hoveredPointIndex.value] ?? null
+  const point = props.points[hoveredPointIndex.value]
+  if (!point) {
+    return null
+  }
+
+  let alignX: 'left' | 'center' | 'right' = 'center'
+  if (hoveredPointIndex.value === 0) {
+    alignX = 'left'
+  } else if (hoveredPointIndex.value === props.points.length - 1) {
+    alignX = 'right'
+  }
+
+  return {
+    ...point,
+    alignX
+  }
 })
 
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(0)}%`
+}
+
+function formatUserLabelPreview(userLabels: string[]): string {
+  if (userLabels.length === 0) {
+    return 'No users in bucket'
+  }
+
+  if (userLabels.length <= 2) {
+    return userLabels.join(', ')
+  }
+
+  return `${userLabels.slice(0, 2).join(', ')} +${userLabels.length - 2} more`
 }
 
 const segments = [
@@ -46,7 +74,7 @@ const segments = [
 </script>
 
 <template>
-  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-hidden">
+  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-visible">
     <div
       v-if="points.length === 0"
       class="h-72 flex items-center justify-center text-sm text-zinc-500"
@@ -74,10 +102,21 @@ const segments = [
         >
           <div
             v-if="hoveredPointIndex === index && hoveredPoint"
-            class="pointer-events-none absolute left-1/2 top-2 z-10 w-52 -translate-x-1/2 rounded-xl bg-zinc-950 px-3 py-3 text-white shadow-lg"
+            class="pointer-events-none absolute top-2 z-20 w-64 rounded-xl bg-zinc-950 px-3 py-3 text-white shadow-lg"
+            :class="
+              hoveredPoint.alignX === 'left'
+                ? 'left-0 translate-x-0'
+                : hoveredPoint.alignX === 'right'
+                  ? 'right-0 translate-x-0'
+                  : 'left-1/2 -translate-x-1/2'
+            "
           >
             <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">{{ hoveredPoint.label }}</p>
             <p class="mt-1 text-sm font-medium">{{ hoveredPoint.totalDecisions }} decisions</p>
+            <p class="mt-2 text-xs text-white/72">
+              {{ hoveredPoint.userLabels.length === 1 ? 'User' : 'Users' }}:
+              {{ formatUserLabelPreview(hoveredPoint.userLabels) }}
+            </p>
             <div class="mt-3 space-y-1.5 text-xs">
               <div
                 v-for="segment in segments"

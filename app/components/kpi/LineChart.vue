@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
-  points: Array<{ label: string, value: number | null }>
+  points: Array<{ label: string, value: number | null, userLabels?: string[] }>
   valueFormatter?: (value: number) => string
 }>()
 
@@ -104,18 +104,45 @@ const hoveredPoint = computed(() => {
     return null
   }
 
+  const pointX = getX(hoveredPointIndex.value)
+  const pointLeftPercent = `${(pointX / width) * 100}%`
+  let alignX: 'left' | 'center' | 'right' = 'center'
+  let left = pointLeftPercent
+
+  if (pointX <= 136) {
+    alignX = 'left'
+    left = `calc(${pointLeftPercent} + 12px)`
+  } else if (pointX >= width - 136) {
+    alignX = 'right'
+    left = `calc(${pointLeftPercent} - 12px)`
+  }
+
   return {
     label: point.label,
     value: point.value,
-    left: `${(getX(hoveredPointIndex.value) / width) * 100}%`,
+    userLabels: point.userLabels ?? [],
+    left,
     top: `${(getY(point.value) / height) * 100}%`,
-    placeBelow: getY(point.value) <= padding.top + 28
+    placeBelow: getY(point.value) <= padding.top + 28,
+    alignX
   }
 })
+
+function formatUserLabelPreview(userLabels: string[]): string {
+  if (userLabels.length === 0) {
+    return 'No users in bucket'
+  }
+
+  if (userLabels.length <= 2) {
+    return userLabels.join(', ')
+  }
+
+  return `${userLabels.slice(0, 2).join(', ')} +${userLabels.length - 2} more`
+}
 </script>
 
 <template>
-  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-hidden">
+  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-visible">
     <div
       v-if="validPoints.length === 0"
       class="h-60 flex items-center justify-center text-sm text-zinc-500"
@@ -126,12 +153,23 @@ const hoveredPoint = computed(() => {
     <template v-else>
       <div
         v-if="hoveredPoint"
-        class="pointer-events-none absolute z-10 -translate-x-1/2 rounded-xl bg-zinc-950 px-3 py-2 text-white shadow-lg"
-        :class="hoveredPoint.placeBelow ? 'translate-y-[14px]' : '-translate-y-[calc(100%+14px)]'"
+        class="pointer-events-none absolute z-20 w-64 rounded-xl bg-zinc-950 px-3 py-3 text-white shadow-lg"
+        :class="[
+          hoveredPoint.placeBelow ? 'translate-y-[14px]' : '-translate-y-[calc(100%+14px)]',
+          hoveredPoint.alignX === 'left'
+            ? 'translate-x-0'
+            : hoveredPoint.alignX === 'right'
+              ? '-translate-x-full'
+              : '-translate-x-1/2'
+        ]"
         :style="{ left: hoveredPoint.left, top: hoveredPoint.top }"
       >
         <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">{{ hoveredPoint.label }}</p>
         <p class="text-sm font-medium mt-1">{{ formatter(hoveredPoint.value) }}</p>
+        <p class="text-xs text-white/72 mt-2">
+          {{ hoveredPoint.userLabels.length === 1 ? 'User' : 'Users' }}:
+          {{ formatUserLabelPreview(hoveredPoint.userLabels) }}
+        </p>
       </div>
 
       <svg

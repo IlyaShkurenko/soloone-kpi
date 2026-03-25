@@ -111,6 +111,18 @@ const allUsersSelected = computed(() =>
   users.value.length > 0 && selectedUserIds.value.length === users.value.length
 )
 
+const emptyStateMessage = computed(() => {
+  if (selectedMetricIds.value.length === 0) {
+    return 'Select at least one metric.'
+  }
+
+  if (selectedUserIds.value.length === 0) {
+    return 'Select at least one user.'
+  }
+
+  return null
+})
+
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10)
 }
@@ -138,10 +150,6 @@ function handleCustomDateChange() {
 
 function toggleUser(userId: string) {
   if (selectedUserIds.value.includes(userId)) {
-    if (selectedUserIds.value.length === 1) {
-      return
-    }
-
     selectedUserIds.value = selectedUserIds.value.filter(id => id !== userId)
     return
   }
@@ -159,10 +167,6 @@ function resetUsersToAll() {
 
 function toggleMetric(metricId: string) {
   if (selectedMetricIds.value.includes(metricId)) {
-    if (selectedMetricIds.value.length === 1) {
-      return
-    }
-
     selectedMetricIds.value = selectedMetricIds.value.filter(id => id !== metricId)
     return
   }
@@ -264,6 +268,23 @@ async function fetchAiResponseDecisionMetric() {
 }
 
 async function refreshMetrics() {
+  for (const [metricId, state] of Object.entries(metricStates)) {
+    if (!selectedMetricIds.value.includes(metricId)) {
+      state.loading = false
+      state.error = null
+      state.data = null
+    }
+  }
+
+  if (selectedMetricIds.value.length === 0 || selectedUserIds.value.length === 0) {
+    for (const state of Object.values(metricStates)) {
+      state.loading = false
+      state.error = null
+      state.data = null
+    }
+    return
+  }
+
   const loaders = selectedMetricIds.value.map(async (metricId) => {
     if (metricId === 'first-ai-interaction') {
       await fetchFirstAiInteractionMetric()
@@ -353,7 +374,7 @@ onMounted(async () => {
               </div>
               <div class="rounded-2xl bg-white/72 border border-black/8 px-4 py-4">
                 <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Users in Scope</p>
-                <p class="text-2xl font-semibold mt-2">{{ selectedUserIds.length || users.length }}</p>
+                <p class="text-2xl font-semibold mt-2">{{ selectedUserIds.length }}</p>
               </div>
               <div class="rounded-2xl bg-white/72 border border-black/8 px-4 py-4">
                 <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Range</p>
@@ -517,7 +538,17 @@ onMounted(async () => {
           </section>
         </aside>
 
-        <div class="space-y-6">
+        <div
+          v-if="emptyStateMessage"
+          class="rounded-[28px] border border-dashed border-black/12 bg-white/68 px-6 py-12 text-center text-zinc-500"
+        >
+          {{ emptyStateMessage }}
+        </div>
+
+        <div
+          v-else
+          class="space-y-6"
+        >
           <KpiMetricWidget
             v-for="metric in durationMetricDescriptors"
             :key="metric.id"
