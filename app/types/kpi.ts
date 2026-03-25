@@ -82,6 +82,40 @@ export interface AiAutomationRateMetric {
   series: AiAutomationRateSeriesPoint[]
 }
 
+export interface AiReplyRateSummary {
+  totalUsers: number
+  usersWithMetric: number
+  coverageRate: number
+  totalSuccessfulOutgoingReplies: number
+  aiReplies: number
+  aiReplyRate: number
+  humanReplies: number
+  humanReplyRate: number
+}
+
+export interface AiReplyRateSeriesPoint {
+  bucketStart: string
+  users: number
+  userLabels: string[]
+  totalSuccessfulOutgoingReplies: number
+  aiReplies: number
+  aiReplyRate: number
+  humanReplies: number
+  humanReplyRate: number
+}
+
+export interface AiReplyRateMetric {
+  metricId: 'ai-reply-rate'
+  granularity: 'day' | 'week' | 'month'
+  filters: {
+    startDate: string | null
+    endDate: string | null
+    userIds: string[]
+  }
+  summary: AiReplyRateSummary
+  series: AiReplyRateSeriesPoint[]
+}
+
 export interface AiResponseDecisionSummary {
   totalUsers: number
   usersWithMetric: number
@@ -124,4 +158,4 @@ export interface AiResponseDecisionMetric {
   series: AiResponseDecisionSeriesPoint[]
 }
 
-export type KpiMetric = DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric
+export type KpiMetric = DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric | AiReplyRateMetric
