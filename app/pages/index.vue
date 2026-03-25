@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type {
+  AiResponseDecisionMetric,
   DurationMetric,
   FirstAiInteractionMetric,
   FirstTransactionMetric,
+  KpiMetric,
   KpiUserOption,
   MetricDescriptor
 } from '~/types/kpi'
@@ -10,7 +12,7 @@ import type {
 type MetricState = {
   loading: boolean
   error: string | null
-  data: DurationMetric | null
+  data: KpiMetric | null
 }
 
 const config = useRuntimeConfig()
@@ -19,6 +21,7 @@ const availableMetrics: MetricDescriptor[] = [
   {
     id: 'first-ai-interaction',
     label: 'Time to First AI Interaction',
+    kind: 'duration',
     description: 'Measures the time from user signup to the first successful AI-generated outgoing message.',
     headlineDescription: 'Avg time from signup to first AI reply',
     trendTitle: 'Average time by signup cohort',
@@ -27,10 +30,20 @@ const availableMetrics: MetricDescriptor[] = [
   {
     id: 'first-transaction',
     label: 'Time to First Transaction',
+    kind: 'duration',
     description: 'Measures the time from user signup to the first completed provider revenue transaction.',
     headlineDescription: 'Avg time from signup to first completed revenue event',
     trendTitle: 'Average time to first revenue by signup cohort',
     trendHint: 'Revenue types = gift, booking payment'
+  },
+  {
+    id: 'ai-response-decisions',
+    label: 'AI Message Approval Outcomes',
+    kind: 'decision',
+    description: 'Tracks how AI-generated drafts are approved as-is, approved after edit, cancelled, or regenerated.',
+    headlineDescription: 'Approved as-is share of all recorded review decisions',
+    trendTitle: 'Decision mix over time',
+    trendHint: '100% stacked by decision outcome'
   }
 ]
 
@@ -47,7 +60,7 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction'])
+const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction', 'ai-response-decisions'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
@@ -60,6 +73,11 @@ const metricStates = reactive<Record<string, MetricState>>({
     data: null
   },
   'first-transaction': {
+    loading: false,
+    error: null,
+    data: null
+  },
+  'ai-response-decisions': {
     loading: false,
     error: null,
     data: null
@@ -79,6 +97,14 @@ const filteredUsers = computed(() => {
 
 const selectedMetricDescriptors = computed(() =>
   availableMetrics.filter((metric) => selectedMetricIds.value.includes(metric.id))
+)
+
+const durationMetricDescriptors = computed(() =>
+  selectedMetricDescriptors.value.filter(metric => metric.kind === 'duration')
+)
+
+const decisionMetricDescriptors = computed(() =>
+  selectedMetricDescriptors.value.filter(metric => metric.kind === 'decision')
 )
 
 const allUsersSelected = computed(() =>
@@ -217,6 +243,26 @@ async function fetchFirstTransactionMetric() {
   }
 }
 
+async function fetchAiResponseDecisionMetric() {
+  const state = metricStates['ai-response-decisions']!
+  state.loading = true
+  state.error = null
+
+  try {
+    state.data = await $fetch<AiResponseDecisionMetric>(
+      `${config.public.apiBase}/api/kpi/metrics/ai-response-decisions`,
+      {
+        query: buildMetricQuery()
+      }
+    )
+  } catch (error: any) {
+    state.error = error?.data?.error || error?.message || 'Failed to load metric'
+    state.data = null
+  } finally {
+    state.loading = false
+  }
+}
+
 async function refreshMetrics() {
   const loaders = selectedMetricIds.value.map(async (metricId) => {
     if (metricId === 'first-ai-interaction') {
@@ -226,6 +272,11 @@ async function refreshMetrics() {
 
     if (metricId === 'first-transaction') {
       await fetchFirstTransactionMetric()
+      return
+    }
+
+    if (metricId === 'ai-response-decisions') {
+      await fetchAiResponseDecisionMetric()
     }
   })
 
@@ -240,6 +291,26 @@ function queueRefresh() {
   refreshTimeout = setTimeout(() => {
     void refreshMetrics()
   }, 180)
+}
+
+function getDurationMetricData(metricId: string): DurationMetric | null {
+  const data = metricStates[metricId]?.data ?? null
+
+  if (!data || data.metricId === 'ai-response-decisions') {
+    return null
+  }
+
+  return data as DurationMetric
+}
+
+function getDecisionMetricData(metricId: string): AiResponseDecisionMetric | null {
+  const data = metricStates[metricId]?.data ?? null
+
+  if (!data || data.metricId !== 'ai-response-decisions') {
+    return null
+  }
+
+  return data as AiResponseDecisionMetric
 }
 
 watch([startDate, endDate, selectedUserIds, selectedMetricIds], () => {
@@ -448,10 +519,19 @@ onMounted(async () => {
 
         <div class="space-y-6">
           <KpiMetricWidget
-            v-for="metric in selectedMetricDescriptors"
+            v-for="metric in durationMetricDescriptors"
             :key="metric.id"
             :descriptor="metric"
-            :data="metricStates[metric.id]?.data ?? null"
+            :data="getDurationMetricData(metric.id)"
+            :loading="metricStates[metric.id]?.loading"
+            :error="metricStates[metric.id]?.error"
+          />
+
+          <KpiDecisionMetricWidget
+            v-for="metric in decisionMetricDescriptors"
+            :key="metric.id"
+            :descriptor="metric"
+            :data="getDecisionMetricData(metric.id)"
             :loading="metricStates[metric.id]?.loading"
             :error="metricStates[metric.id]?.error"
           />
