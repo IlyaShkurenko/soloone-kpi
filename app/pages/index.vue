@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type {
   AiAutomationRateMetric,
+  AiEscalationRateMetric,
   AiReplyRateMetric,
   AiResponseDecisionMetric,
   DurationMetric,
@@ -64,6 +65,15 @@ const availableMetrics: MetricDescriptor[] = [
     headlineDescription: 'AI-generated share of all successful outgoing replies',
     trendTitle: 'AI reply rate over time',
     trendHint: 'Successful AI outgoing replies / all successful outgoing replies'
+  },
+  {
+    id: 'ai-escalation-rate',
+    label: 'AI Escalation Rate',
+    kind: 'rate',
+    description: 'Tracks the share of recorded AI attempts that used request_human_help.',
+    headlineDescription: 'Escalated share of recorded AI attempts',
+    trendTitle: 'Escalation rate over time',
+    trendHint: 'request_human_help / all recorded AI attempts'
   }
 ]
 
@@ -80,7 +90,7 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-automation-rate', 'ai-reply-rate'])
+const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-automation-rate', 'ai-reply-rate', 'ai-escalation-rate'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
@@ -108,6 +118,11 @@ const metricStates = reactive<Record<string, MetricState>>({
     data: null
   },
   'ai-reply-rate': {
+    loading: false,
+    error: null,
+    data: null
+  },
+  'ai-escalation-rate': {
     loading: false,
     error: null,
     data: null
@@ -147,6 +162,10 @@ const automationRateMetricDescriptors = computed(() =>
 
 const replyRateMetricDescriptors = computed(() =>
   rateMetricDescriptors.value.filter(metric => metric.id === 'ai-reply-rate')
+)
+
+const escalationRateMetricDescriptors = computed(() =>
+  rateMetricDescriptors.value.filter(metric => metric.id === 'ai-escalation-rate')
 )
 
 const allUsersSelected = computed(() =>
@@ -349,6 +368,26 @@ async function fetchAiReplyRateMetric() {
   }
 }
 
+async function fetchAiEscalationRateMetric() {
+  const state = metricStates['ai-escalation-rate']!
+  state.loading = true
+  state.error = null
+
+  try {
+    state.data = await $fetch<AiEscalationRateMetric>(
+      `${config.public.apiBase}/api/kpi/metrics/ai-escalation-rate`,
+      {
+        query: buildMetricQuery()
+      }
+    )
+  } catch (error: any) {
+    state.error = error?.data?.error || error?.message || 'Failed to load metric'
+    state.data = null
+  } finally {
+    state.loading = false
+  }
+}
+
 async function refreshMetrics() {
   for (const [metricId, state] of Object.entries(metricStates)) {
     if (!selectedMetricIds.value.includes(metricId)) {
@@ -390,6 +429,11 @@ async function refreshMetrics() {
 
     if (metricId === 'ai-reply-rate') {
       await fetchAiReplyRateMetric()
+      return
+    }
+
+    if (metricId === 'ai-escalation-rate') {
+      await fetchAiEscalationRateMetric()
     }
   })
 
@@ -409,7 +453,7 @@ function queueRefresh() {
 function getDurationMetricData(metricId: string): DurationMetric | null {
   const data = metricStates[metricId]?.data ?? null
 
-  if (!data || data.metricId === 'ai-response-decisions' || data.metricId === 'ai-automation-rate' || data.metricId === 'ai-reply-rate') {
+  if (!data || data.metricId === 'ai-response-decisions' || data.metricId === 'ai-automation-rate' || data.metricId === 'ai-reply-rate' || data.metricId === 'ai-escalation-rate') {
     return null
   }
 
@@ -444,6 +488,16 @@ function getReplyRateMetricData(metricId: string): AiReplyRateMetric | null {
   }
 
   return data as AiReplyRateMetric
+}
+
+function getEscalationRateMetricData(metricId: string): AiEscalationRateMetric | null {
+  const data = metricStates[metricId]?.data ?? null
+
+  if (!data || data.metricId !== 'ai-escalation-rate') {
+    return null
+  }
+
+  return data as AiEscalationRateMetric
 }
 
 watch([startDate, endDate, selectedUserIds, selectedMetricIds], () => {
@@ -693,6 +747,15 @@ onMounted(async () => {
             :key="metric.id"
             :descriptor="metric"
             :data="getReplyRateMetricData(metric.id)"
+            :loading="metricStates[metric.id]?.loading"
+            :error="metricStates[metric.id]?.error"
+          />
+
+          <KpiEscalationRateMetricWidget
+            v-for="metric in escalationRateMetricDescriptors"
+            :key="metric.id"
+            :descriptor="metric"
+            :data="getEscalationRateMetricData(metric.id)"
             :loading="metricStates[metric.id]?.loading"
             :error="metricStates[metric.id]?.error"
           />

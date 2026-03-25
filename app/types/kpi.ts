@@ -116,6 +116,40 @@ export interface AiReplyRateMetric {
   series: AiReplyRateSeriesPoint[]
 }
 
+export interface AiEscalationRateSummary {
+  totalUsers: number
+  usersWithMetric: number
+  coverageRate: number
+  totalAiAttempts: number
+  escalatedAttempts: number
+  escalationRate: number
+  nonEscalatedAttempts: number
+  nonEscalationRate: number
+}
+
+export interface AiEscalationRateSeriesPoint {
+  bucketStart: string
+  users: number
+  userLabels: string[]
+  totalAiAttempts: number
+  escalatedAttempts: number
+  escalationRate: number
+  nonEscalatedAttempts: number
+  nonEscalationRate: number
+}
+
+export interface AiEscalationRateMetric {
+  metricId: 'ai-escalation-rate'
+  granularity: 'day' | 'week' | 'month'
+  filters: {
+    startDate: string | null
+    endDate: string | null
+    userIds: string[]
+  }
+  summary: AiEscalationRateSummary
+  series: AiEscalationRateSeriesPoint[]
+}
+
 export interface AiResponseDecisionSummary {
   totalUsers: number
   usersWithMetric: number
@@ -158,4 +192,4 @@ export interface AiResponseDecisionMetric {
   series: AiResponseDecisionSeriesPoint[]
 }
 
-export type KpiMetric = DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric | AiReplyRateMetric
+export type KpiMetric = DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric | AiReplyRateMetric | AiEscalationRateMetric

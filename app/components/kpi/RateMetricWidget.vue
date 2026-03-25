@@ -45,6 +45,10 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
     return new Intl.DateTimeFormat('en-GB', { month: 'short', year: '2-digit' }).format(date)
   }
 
+  if (granularity === 'week') {
+    return `Week of ${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)}`
+  }
+
   return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)
 }
 </script>

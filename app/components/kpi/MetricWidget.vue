@@ -59,7 +59,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
   }
 
   if (granularity === 'week') {
-    return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)
+    return `Week of ${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)}`
   }
 
   return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { AiResponseDecisionMetric, MetricDescriptor } from '~/types/kpi'
+import type { AiEscalationRateMetric, MetricDescriptor } from '~/types/kpi'
 
 const props = defineProps<{
   descriptor: MetricDescriptor
-  data: AiResponseDecisionMetric | null
+  data: AiEscalationRateMetric | null
   loading?: boolean
   error?: string | null
 }>()
@@ -18,36 +18,9 @@ const summaryItems = computed(() => {
   }
 
   return [
-    {
-      label: 'Approved as-is',
-      value: formatPercent(props.data.summary.approvedAsIsRate),
-      detail: `${props.data.summary.approvedAsIsCount} decisions`
-    },
-    {
-      label: 'Approved after edit',
-      value: formatPercent(props.data.summary.approvedAfterEditRate),
-      detail: `${props.data.summary.approvedAfterEditCount} decisions`
-    },
-    {
-      label: 'Cancelled',
-      value: formatPercent(props.data.summary.cancelledRate),
-      detail: `${props.data.summary.cancelledCount} decisions`
-    },
-    {
-      label: 'Regenerated',
-      value: formatPercent(props.data.summary.regeneratedRate),
-      detail: `${props.data.summary.regeneratedCount} decisions`
-    }
-  ]
-})
-
-const metaItems = computed(() => {
-  if (!props.data) {
-    return []
-  }
-
-  return [
-    { label: 'Total Decisions', value: String(props.data.summary.totalDecisions) },
+    { label: 'Escalation Rate', value: formatPercent(props.data.summary.escalationRate) },
+    { label: 'Escalated', value: String(props.data.summary.escalatedAttempts) },
+    { label: 'Non-Escalated', value: String(props.data.summary.nonEscalatedAttempts) },
     { label: 'Coverage', value: formatPercent(props.data.summary.coverageRate) },
     { label: 'Users', value: `${props.data.summary.usersWithMetric}/${props.data.summary.totalUsers}` }
   ]
@@ -60,16 +33,8 @@ const chartPoints = computed(() => {
 
   return props.data.series.map((point) => ({
     label: formatBucketLabel(point.bucketStart, props.data!.granularity),
-    userLabels: point.userLabels,
-    totalDecisions: point.totalDecisions,
-    approvedAsIsCount: point.approvedAsIsCount,
-    approvedAsIsRate: point.approvedAsIsRate,
-    approvedAfterEditCount: point.approvedAfterEditCount,
-    approvedAfterEditRate: point.approvedAfterEditRate,
-    cancelledCount: point.cancelledCount,
-    cancelledRate: point.cancelledRate,
-    regeneratedCount: point.regeneratedCount,
-    regeneratedRate: point.regeneratedRate
+    value: point.escalationRate,
+    userLabels: point.userLabels
   }))
 })
 
@@ -103,7 +68,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
           class="rounded-2xl bg-teal-700 text-white px-6 py-5 min-w-64"
         >
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Headline</p>
-          <p class="text-2xl font-semibold mt-2">{{ formatPercent(data.summary.approvedAsIsRate) }}</p>
+          <p class="text-2xl font-semibold mt-2">{{ formatPercent(data.summary.escalationRate) }}</p>
           <p class="text-sm text-white/72 mt-1">{{ descriptor.headlineDescription }}</p>
         </div>
       </div>
@@ -125,27 +90,21 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
       </div>
 
       <template v-else-if="data">
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <div
             v-for="item in summaryItems"
             :key="item.label"
             class="rounded-2xl border border-black/8 bg-white/72 px-4 py-4"
           >
             <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ item.label }}</p>
-            <p class="text-2xl font-semibold text-zinc-950 mt-2">{{ item.value }}</p>
-            <p class="text-sm text-zinc-500 mt-1">{{ item.detail }}</p>
+            <p class="text-xl font-semibold text-zinc-950 mt-2">{{ item.value }}</p>
           </div>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-3">
-          <div
-            v-for="item in metaItems"
-            :key="item.label"
-            class="rounded-2xl border border-black/8 bg-white/60 px-4 py-4"
-          >
-            <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ item.label }}</p>
-            <p class="text-xl font-semibold text-zinc-950 mt-2">{{ item.value }}</p>
-          </div>
+        <div class="rounded-2xl border border-black/8 bg-white/60 px-4 py-4">
+          <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Recorded AI Attempts</p>
+          <p class="text-2xl font-semibold text-zinc-950 mt-2">{{ data.summary.totalAiAttempts }}</p>
+          <p class="text-sm text-zinc-500 mt-1">Distinct AI attempts with recorded outcomes. Escalation is `request_human_help`.</p>
         </div>
 
         <div class="space-y-3">
@@ -157,7 +116,10 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
             <p class="text-sm text-zinc-500">{{ descriptor.trendHint }}</p>
           </div>
 
-          <KpiDecisionStackedChart :points="chartPoints" />
+          <KpiLineChart
+            :points="chartPoints"
+            :value-formatter="(value) => formatPercent(value)"
+          />
         </div>
       </template>
     </div>
