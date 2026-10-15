@@ -1,24 +1,14 @@
 <script setup lang="ts">
-const dailyActivity = [
-  { date: '9 Oct', messages: 12, reactions: 5, disconnects: 2 },
-  { date: '10 Oct', messages: 43, reactions: 7, disconnects: 9 },
-  { date: '11 Oct', messages: 33, reactions: 10, disconnects: 3 },
-  { date: '12 Oct', messages: 32, reactions: 10, disconnects: 0 },
-  { date: '13 Oct', messages: 31, reactions: 7, disconnects: 1 },
-  { date: '14 Oct', messages: 37, reactions: 6, disconnects: 1 },
-  { date: '15 Oct · partial', messages: 15, reactions: 3, disconnects: 2 }
+const dailyDisconnects = [
+  { date: '9 Oct', disconnects: 2 },
+  { date: '10 Oct', disconnects: 9 },
+  { date: '11 Oct', disconnects: 3 },
+  { date: '12 Oct', disconnects: 0 },
+  { date: '13 Oct', disconnects: 1 },
+  { date: '14 Oct', disconnects: 1 },
+  { date: '15 Oct · partial', disconnects: 2 }
 ]
-const totals = dailyActivity.reduce((sum, day) => ({
-  messages: sum.messages + day.messages,
-  reactions: sum.reactions + day.reactions,
-  disconnects: sum.disconnects + day.disconnects
-}), { messages: 0, reactions: 0, disconnects: 0 })
-const warmupCards = [
-  { label: 'Warm-up messages', value: totals.messages },
-  { label: 'Reactions', value: totals.reactions },
-  { label: 'Total sends', value: totals.messages + totals.reactions },
-  { label: 'Numbers that sent', value: 20 }
-]
+const totalDisconnects = dailyDisconnects.reduce((sum, day) => sum + day.disconnects, 0)
 const additionalBatch = { numbers: 6, disconnects: 4 }
 const connectionStatus = [
   { label: 'Connected to WhatsApp · AUTH', warming: 8 + additionalBatch.numbers, nonWarming: 7 },
@@ -177,38 +167,15 @@ const largestStage = Math.max(...pipeline.map(stage => stage.count))
       </p>
     </article>
 
-    <div>
-      <h3 class="font-medium">
-        Warm-up activity
-      </h3>
-      <p class="text-sm text-zinc-500 mt-1">
-        Messages and reactions sent by the warmer only, through 15 Oct, 13:13 London.
-      </p>
-    </div>
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <article
-        v-for="card in warmupCards"
-        :key="card.label"
-        class="kpi-panel p-5"
-      >
-        <h4 class="font-medium">
-          {{ card.label }}
-        </h4>
-        <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
-          {{ card.value }}
-        </p>
-      </article>
-    </div>
-
     <article class="kpi-panel p-5">
       <h3 class="font-medium">
         Authorization losses · all numbers
       </h3>
       <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
-        {{ totals.disconnects + additionalBatch.disconnects }}
+        {{ totalDisconnects + additionalBatch.disconnects }}
       </p>
       <p class="text-sm text-zinc-500 mt-2">
-        {{ totals.disconnects }} events affecting 17 numbers in the original report, plus {{ additionalBatch.disconnects }} events in the additional batch.
+        {{ totalDisconnects }} events affecting 17 numbers in the original report, plus {{ additionalBatch.disconnects }} events in the additional batch.
         A number can disconnect more than once. Short starting/creating restarts are excluded.
       </p>
       <p class="text-sm text-zinc-500 mt-2">
@@ -224,12 +191,6 @@ const largestStage = Math.max(...pipeline.map(stage => stage.count))
               <th class="text-left py-2 font-normal">
                 Date
               </th>
-              <th class="text-right px-3 font-normal">
-                Messages
-              </th>
-              <th class="text-right px-3 font-normal">
-                Reactions
-              </th>
               <th class="text-right pl-3 font-normal">
                 Authorization losses
               </th>
@@ -237,18 +198,12 @@ const largestStage = Math.max(...pipeline.map(stage => stage.count))
           </thead>
           <tbody>
             <tr
-              v-for="day in dailyActivity"
+              v-for="day in dailyDisconnects"
               :key="day.date"
               class="border-t border-black/10"
             >
               <td class="py-3">
                 {{ day.date }}
-              </td>
-              <td class="text-right px-3 tabular-nums">
-                {{ day.messages }}
-              </td>
-              <td class="text-right px-3 tabular-nums">
-                {{ day.reactions }}
               </td>
               <td class="text-right pl-3 tabular-nums">
                 {{ day.disconnects }}
@@ -260,14 +215,8 @@ const largestStage = Math.max(...pipeline.map(stage => stage.count))
               <td class="pt-3">
                 Original report total
               </td>
-              <td class="text-right pt-3 px-3 tabular-nums">
-                {{ totals.messages }}
-              </td>
-              <td class="text-right pt-3 px-3 tabular-nums">
-                {{ totals.reactions }}
-              </td>
               <td class="text-right pt-3 pl-3 tabular-nums">
-                {{ totals.disconnects }}
+                {{ totalDisconnects }}
               </td>
             </tr>
           </tfoot>
