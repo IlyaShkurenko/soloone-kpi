@@ -8,7 +8,7 @@ const props = defineProps<{
 }>()
 const channelMode = ref<'chats' | 'messages'>('chats')
 const currencies = computed(() => [...new Set([
-  ...(props.data?.series ?? []), ...(props.data ? [props.data.current, props.data.previous] : [])
+  ...(props.data?.series ?? []), ...(props.data ? [props.data.current] : [])
 ].flatMap(period => period.revenue.map(item => item.currency)))].sort())
 const channels = [
   { id: 'whatsapp', label: 'WhatsApp' }, { id: 'soloone', label: 'Fan2You' },
@@ -26,16 +26,8 @@ function shortDate(value: string) {
 function periodLabel(period: ActivityPeriod) {
   return `${shortDate(period.startDate)} – ${shortDate(period.endDate)}`
 }
-function signed(value: number) {
-  return `${value > 0 ? '+' : ''}${value.toLocaleString('en-GB')}`
-}
 function percent(value: number | null) {
   return value === null ? '—' : `${(value * 100).toFixed(1)}%`
-}
-function rateDelta(current: number | null, previous: number | null) {
-  if (current === null || previous === null) return 'No comparable outcomes'
-  const delta = (current - previous) * 100
-  return `${delta > 0 ? '+' : ''}${delta.toFixed(1)} pp vs. previous period`
 }
 function money(value: number | null, currency: string) {
   if (value === null) return '—'
@@ -44,14 +36,6 @@ function money(value: number | null, currency: string) {
 function revenue(period: ActivityPeriod, currency: string, perUser = false) {
   const item = period.revenue.find(row => row.currency === currency)
   return perUser ? (period.activeUsers ? (item?.perActiveUserMinor ?? 0) : null) : (item?.grossMinor ?? 0)
-}
-function revenueDelta(currency: string, perUser = false) {
-  if (!props.data) return ''
-  const current = revenue(props.data.current, currency, perUser)
-  const previous = revenue(props.data.previous, currency, perUser)
-  if (current === null || previous === null) return 'No comparable active users'
-  const delta = current - previous
-  return `${delta > 0 ? '+' : ''}${money(delta, currency)} vs. previous period`
 }
 function channelCount(period: ActivityPeriod, channel: string) {
   return period.channels.find(row => row.channel === channel)?.[channelMode.value] ?? 0
@@ -85,7 +69,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
           Activity overview · {{ periodLabel(data.current) }}
         </h2>
         <p class="text-sm text-zinc-500 mt-1">
-          Compared with {{ periodLabel(data.previous) }} · Totals cover the selected date range
+          Totals cover the selected date range · Bars show weeks within this range
         </p>
       </div>
 
@@ -99,9 +83,6 @@ function channelShare(period: ActivityPeriod, channel: string) {
           </p>
           <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
             {{ data.current.activeUsers }}
-          </p>
-          <p class="text-xs text-zinc-500 mt-2">
-            {{ signed(data.current.activeUsers - data.previous.activeUsers) }} vs. previous period
           </p>
           <KpiSparkBars :points="data.series.map(period => ({ label: periodLabel(period), value: period.activeUsers }))" />
         </article>
@@ -130,9 +111,6 @@ function channelShare(period: ActivityPeriod, channel: string) {
             <p class="text-3xl font-semibold text-teal-700 tabular-nums">
               {{ money(revenue(data.current, currency, perUser), currency) }} <span class="text-xs text-zinc-500">{{ currency }}</span>
             </p>
-            <p class="text-xs text-zinc-500 mt-2">
-              {{ revenueDelta(currency, perUser) }}
-            </p>
             <KpiSparkBars
               :points="data.series.map(period => ({ label: periodLabel(period), value: revenue(period, currency, perUser) }))"
               :formatter="value => money(value, currency)"
@@ -154,9 +132,6 @@ function channelShare(period: ActivityPeriod, channel: string) {
           </p>
           <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
             {{ data.current.activeChats }}
-          </p>
-          <p class="text-xs text-zinc-500 mt-2">
-            {{ signed(data.current.activeChats - data.previous.activeChats) }} vs. previous period
           </p>
           <KpiSparkBars :points="data.series.map(period => ({ label: periodLabel(period), value: period.activeChats }))" />
         </article>
@@ -188,10 +163,6 @@ function channelShare(period: ActivityPeriod, channel: string) {
                     {{ channelMode === 'chats' ? 'Chats' : 'Messages' }}
                   </th><th class="font-normal text-right px-3">
                     Share
-                  </th><th class="font-normal text-right px-3">
-                    Previous
-                  </th><th class="font-normal text-right">
-                    Δ
                   </th>
                 </tr>
               </thead>
@@ -207,10 +178,6 @@ function channelShare(period: ActivityPeriod, channel: string) {
                     {{ channelCount(data.current, channel.id) }}
                   </td><td class="text-right px-3">
                     {{ channelShare(data.current, channel.id) }}
-                  </td><td class="text-right px-3">
-                    {{ channelCount(data.previous, channel.id) }}
-                  </td><td class="text-right">
-                    {{ signed(channelCount(data.current, channel.id) - channelCount(data.previous, channel.id)) }}
                   </td>
                 </tr>
               </tbody>
@@ -243,7 +210,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
             {{ percent(data.current.automation[category.key]) }}
           </p>
           <p class="text-xs text-zinc-500 mt-2">
-            {{ data.current.automation[category.count] }} outcomes · {{ rateDelta(data.current.automation[category.key], data.previous.automation[category.key]) }}
+            {{ data.current.automation[category.count] }} outcomes
           </p>
         </article>
       </div>
