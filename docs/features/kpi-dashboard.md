@@ -8,4 +8,6 @@ Activity overview shows totals for the full selected date range, weekly trends w
 
 Duration cards retain signup-cohort filtering and explicitly distinguish their cohort count from the selected account count (KPI-1.2). Existing AI review, reply and escalation metrics retain their denominators.
 
-Use the teal palette, rounded cards and green headline panels with solid light/dark backgrounds and readable axes; retain phone-number statistics unchanged (KPI-3.1). Validate filter races, empty selection, reselecting users and mobile/desktop rendering, plus lint, typecheck and build.
+Number statistics are a manually supplied snapshot for 9–15 October 2026, separate from the API metrics. The section states its reporting cutoff and that date/user filters do not apply. Unknown block counts/rates display as unavailable; ready and active numbers remain combined. Warm-up assignment is separate from connection state (AUTH, LAUNCH, health unavailable). Additional batch updates are distinguished from the original daily breakdown.
+
+Use the teal palette, rounded cards and green headline panels with solid light/dark backgrounds and readable axes (KPI-3.1). Validate filter races, empty selection, reselecting users and mobile/desktop rendering, plus lint, typecheck and build.

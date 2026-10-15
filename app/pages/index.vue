@@ -624,6 +624,8 @@ onBeforeUnmount(() => {
             :error="metricStates[metric.id]?.error"
           />
         </div>
+
+        <KpiNumberStatistics class="lg:col-start-2" />
       </section>
     </div>
   </main>
