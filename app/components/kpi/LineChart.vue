@@ -4,12 +4,23 @@ const props = defineProps<{
   valueFormatter?: (value: number) => string
 }>()
 
-const width = 760
+const chartElement = ref<HTMLDivElement | null>(null)
+const width = ref(760)
 const height = 240
 const padding = { top: 18, right: 32, bottom: 36, left: 64 }
-const innerWidth = width - padding.left - padding.right
+const innerWidth = computed(() => Math.max(0, width.value - padding.left - padding.right))
+const pointSpacing = computed(() => innerWidth.value / Math.max(props.points.length - 1, 1))
 const innerHeight = height - padding.top - padding.bottom
 const hoveredPointIndex = ref<number | null>(null)
+let resizeObserver: ResizeObserver | undefined
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver(([entry]) => {
+    if (entry && entry.contentRect.width > 0) width.value = entry.contentRect.width
+  })
+  if (chartElement.value) resizeObserver.observe(chartElement.value)
+})
+onBeforeUnmount(() => resizeObserver?.disconnect())
 
 const validPoints = computed(() =>
   props.points
@@ -34,10 +45,10 @@ const yRange = computed(() => {
 
 function getX(index: number): number {
   if (props.points.length <= 1) {
-    return padding.left + innerWidth / 2
+    return padding.left + innerWidth.value / 2
   }
 
-  return padding.left + (index / (props.points.length - 1)) * innerWidth
+  return padding.left + (index / (props.points.length - 1)) * innerWidth.value
 }
 
 function getY(value: number): number {
@@ -77,17 +88,18 @@ const axisLabels = computed(() => {
     return []
   }
 
-  if (props.points.length <= 3) {
-    return props.points.map((point, index) => ({ label: point.label, x: getX(index) }))
-  }
+  const lastIndex = props.points.length - 1
+  const indices = lastIndex > 0 && innerWidth.value < 280
+    ? [0, lastIndex]
+    : props.points.length <= 3
+      ? props.points.map((_, index) => index)
+      : [0, Math.floor(lastIndex / 2), lastIndex]
 
-  const middleIndex = Math.floor((props.points.length - 1) / 2)
-
-  return [
-    { label: props.points[0]!.label, x: getX(0) },
-    { label: props.points[middleIndex]!.label, x: getX(middleIndex) },
-    { label: props.points[props.points.length - 1]!.label, x: getX(props.points.length - 1) }
-  ]
+  return indices.map(index => ({
+    label: props.points[index]!.label,
+    x: getX(index),
+    anchor: lastIndex === 0 ? 'middle' : index === 0 ? 'start' : index === lastIndex ? 'end' : 'middle'
+  }))
 })
 
 const formatter = computed(() =>
@@ -105,26 +117,17 @@ const hoveredPoint = computed(() => {
   }
 
   const pointX = getX(hoveredPointIndex.value)
-  const pointLeftPercent = `${(pointX / width) * 100}%`
-  let alignX: 'left' | 'center' | 'right' = 'center'
-  let left = pointLeftPercent
-
-  if (pointX <= 136) {
-    alignX = 'left'
-    left = `calc(${pointLeftPercent} + 12px)`
-  } else if (pointX >= width - 136) {
-    alignX = 'right'
-    left = `calc(${pointLeftPercent} - 12px)`
-  }
+  const tooltipWidth = Math.min(256, width.value - 24)
+  const left = Math.max(12, Math.min(pointX - tooltipWidth / 2, width.value - tooltipWidth - 12))
 
   return {
     label: point.label,
     value: point.value,
     userLabels: point.userLabels ?? [],
-    left,
+    left: `${left}px`,
+    width: `${tooltipWidth}px`,
     top: `${(getY(point.value) / height) * 100}%`,
-    placeBelow: getY(point.value) <= padding.top + 28,
-    alignX
+    placeBelow: getY(point.value) <= padding.top + 28
   }
 })
 
@@ -142,7 +145,10 @@ function formatUserLabelPreview(userLabels: string[]): string {
 </script>
 
 <template>
-  <div class="relative w-full rounded-lg border border-black/8 bg-white/70 overflow-visible">
+  <div
+    ref="chartElement"
+    class="relative w-full rounded-lg border border-black/8 bg-white/70 overflow-visible"
+  >
     <div
       v-if="validPoints.length === 0"
       class="h-60 flex items-center justify-center text-sm text-zinc-500"
@@ -153,16 +159,9 @@ function formatUserLabelPreview(userLabels: string[]): string {
     <template v-else>
       <div
         v-if="hoveredPoint"
-        class="pointer-events-none absolute z-20 w-64 rounded-xl bg-zinc-950 px-3 py-3 text-white shadow-lg"
-        :class="[
-          hoveredPoint.placeBelow ? 'translate-y-[14px]' : '-translate-y-[calc(100%+14px)]',
-          hoveredPoint.alignX === 'left'
-            ? 'translate-x-0'
-            : hoveredPoint.alignX === 'right'
-              ? '-translate-x-full'
-              : '-translate-x-1/2'
-        ]"
-        :style="{ left: hoveredPoint.left, top: hoveredPoint.top }"
+        class="pointer-events-none absolute z-20 rounded-xl bg-zinc-950 px-3 py-3 text-white shadow-lg"
+        :class="hoveredPoint.placeBelow ? 'translate-y-[14px]' : '-translate-y-[calc(100%+14px)]'"
+        :style="{ left: hoveredPoint.left, top: hoveredPoint.top, width: hoveredPoint.width }"
       >
         <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">
           {{ hoveredPoint.label }}
@@ -178,8 +177,8 @@ function formatUserLabelPreview(userLabels: string[]): string {
 
       <svg
         :viewBox="`0 0 ${width} ${height}`"
-        class="w-full h-60"
-        preserveAspectRatio="none"
+        class="block w-full"
+        :style="{ height: `${height}px` }"
         role="img"
         aria-label="Metric trend chart"
       >
@@ -241,7 +240,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
           <circle
             :cx="getX(point.index)"
             :cy="getY(point.value as number)"
-            r="12"
+            :r="Math.min(12, pointSpacing / 2)"
             fill="transparent"
             class="cursor-pointer"
             @mouseenter="hoveredPointIndex = point.index"
@@ -249,6 +248,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
           />
 
           <circle
+            v-if="pointSpacing >= 12 || hoveredPointIndex === point.index"
             :cx="getX(point.index)"
             :cy="getY(point.value as number)"
             r="4"
@@ -266,7 +266,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
           :y="height - 10"
           fill="var(--ui-text-muted)"
           font-size="12"
-          text-anchor="middle"
+          :text-anchor="axisLabel.anchor"
         >
           {{ axisLabel.label }}
         </text>
