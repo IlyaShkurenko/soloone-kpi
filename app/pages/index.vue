@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type {
-  AiAutomationRateMetric,
   AiEscalationRateMetric,
   AiReplyRateMetric,
   AiResponseDecisionMetric,
@@ -56,15 +55,6 @@ const availableMetrics: MetricDescriptor[] = [
     trendHint: '100% stacked by decision outcome'
   },
   {
-    id: 'ai-automation-rate',
-    label: 'Auto-send Share of AI Replies',
-    kind: 'rate',
-    description: 'Tracks the share of recorded successful AI-generated replies that were sent automatically without provider approval.',
-    headlineDescription: 'Auto-sent share of recorded successful AI replies',
-    trendTitle: 'Automation rate over time',
-    trendHint: 'Auto-sent / approved-and-sent AI replies with recorded outcomes'
-  },
-  {
     id: 'ai-reply-rate',
     label: 'AI Reply Rate',
     kind: 'rate',
@@ -97,7 +87,7 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['activity-overview', 'first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-automation-rate', 'ai-reply-rate', 'ai-escalation-rate'])
+const selectedMetricIds = ref<string[]>(['activity-overview', 'first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-reply-rate', 'ai-escalation-rate'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
@@ -116,11 +106,6 @@ const metricStates = reactive<Record<string, MetricState>>({
     data: null
   },
   'ai-response-decisions': {
-    loading: false,
-    error: null,
-    data: null
-  },
-  'ai-automation-rate': {
     loading: false,
     error: null,
     data: null
@@ -165,10 +150,6 @@ const decisionMetricDescriptors = computed(() =>
 
 const rateMetricDescriptors = computed(() =>
   selectedMetricDescriptors.value.filter(metric => metric.kind === 'rate')
-)
-
-const automationRateMetricDescriptors = computed(() =>
-  rateMetricDescriptors.value.filter(metric => metric.id === 'ai-automation-rate')
 )
 
 const replyRateMetricDescriptors = computed(() =>
@@ -346,16 +327,6 @@ function getDecisionMetricData(metricId: string): AiResponseDecisionMetric | nul
   }
 
   return data as AiResponseDecisionMetric
-}
-
-function getRateMetricData(metricId: string): AiAutomationRateMetric | null {
-  const data = metricStates[metricId]?.data ?? null
-
-  if (!data || data.metricId !== 'ai-automation-rate') {
-    return null
-  }
-
-  return data as AiAutomationRateMetric
 }
 
 function getReplyRateMetricData(metricId: string): AiReplyRateMetric | null {
@@ -631,15 +602,6 @@ onBeforeUnmount(() => {
             :key="metric.id"
             :descriptor="metric"
             :data="getDecisionMetricData(metric.id)"
-            :loading="metricStates[metric.id]?.loading"
-            :error="metricStates[metric.id]?.error"
-          />
-
-          <KpiRateMetricWidget
-            v-for="metric in automationRateMetricDescriptors"
-            :key="metric.id"
-            :descriptor="metric"
-            :data="getRateMetricData(metric.id)"
             :loading="metricStates[metric.id]?.loading"
             :error="metricStates[metric.id]?.error"
           />
