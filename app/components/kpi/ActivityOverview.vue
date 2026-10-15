@@ -15,8 +15,8 @@ const channels = [
   { id: 'telegram', label: 'Telegram' }, { id: 'sms', label: 'SMS' }
 ]
 const categories = [
-  { key: 'automatedRate', count: 'automated', label: 'Fully Automated', description: 'AI replies sent without approval', color: 'bg-blue-500' },
-  { key: 'acceptedRate', count: 'accepted', label: 'AI-Draft accepted', description: 'Approved and sent, including edited drafts', color: 'bg-orange-500' },
+  { key: 'automatedRate', count: 'automated', label: 'Fully Automated', description: 'AI replies sent without approval', color: 'bg-teal-600' },
+  { key: 'acceptedRate', count: 'accepted', label: 'AI-Draft accepted', description: 'Approved and sent, including edited drafts', color: 'bg-sky-500' },
   { key: 'manualOrDeclinedRate', count: 'manualOrDeclined', label: 'Not automated / AI-Draft declined', description: 'Non-AI messages and cancelled drafts', color: 'bg-zinc-500' }
 ] as const
 
@@ -65,13 +65,13 @@ function channelShare(period: ActivityPeriod, channel: string) {
 <template>
   <section
     class="space-y-5"
-    aria-label="Weekly overview"
+    aria-label="Activity overview"
   >
     <div
       v-if="loading"
       class="kpi-panel rounded-xl p-8 text-center text-zinc-500"
     >
-      Loading weekly overview…
+      Loading activity overview…
     </div>
     <div
       v-else-if="error"
@@ -82,22 +82,22 @@ function channelShare(period: ActivityPeriod, channel: string) {
     <template v-else-if="data">
       <div>
         <h2 class="text-lg font-semibold">
-          Weekly overview · {{ periodLabel(data.current) }}
+          Activity overview · {{ periodLabel(data.current) }}
         </h2>
         <p class="text-sm text-zinc-500 mt-1">
-          Compared with {{ periodLabel(data.previous) }} · Trends cover the selected date range
+          Compared with {{ periodLabel(data.previous) }} · Totals cover the selected date range
         </p>
       </div>
 
       <div class="grid gap-4 xl:grid-cols-3">
         <article class="kpi-panel rounded-xl p-5">
           <h3 class="font-medium">
-            Weekly Active Users
+            Active Users
           </h3>
           <p class="text-sm text-zinc-500 mt-2">
             Creators with sent or received messages
           </p>
-          <p class="text-3xl tabular-nums mt-4">
+          <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
             {{ data.current.activeUsers }}
           </p>
           <p class="text-xs text-zinc-500 mt-2">
@@ -127,7 +127,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
             :key="currency"
             class="mt-4"
           >
-            <p class="text-3xl tabular-nums">
+            <p class="text-3xl font-semibold text-teal-700 tabular-nums">
               {{ money(revenue(data.current, currency, perUser), currency) }} <span class="text-xs text-zinc-500">{{ currency }}</span>
             </p>
             <p class="text-xs text-zinc-500 mt-2">
@@ -152,7 +152,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
           <p class="text-sm text-zinc-500 mt-2">
             Conversations with sent or received messages
           </p>
-          <p class="text-3xl tabular-nums mt-4">
+          <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
             {{ data.current.activeChats }}
           </p>
           <p class="text-xs text-zinc-500 mt-2">
@@ -170,7 +170,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
                 v-for="mode in (['chats', 'messages'] as const)"
                 :key="mode"
                 size="xs"
-                color="neutral"
+                color="primary"
                 :variant="channelMode === mode ? 'solid' : 'outline'"
                 @click="channelMode = mode"
               >
@@ -239,7 +239,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
           <p class="text-sm text-zinc-500 mt-2">
             {{ category.description }}
           </p>
-          <p class="text-3xl tabular-nums mt-4">
+          <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
             {{ percent(data.current.automation[category.key]) }}
           </p>
           <p class="text-xs text-zinc-500 mt-2">

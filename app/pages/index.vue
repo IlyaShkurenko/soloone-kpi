@@ -23,7 +23,7 @@ const colorMode = useColorMode()
 const availableMetrics: MetricDescriptor[] = [
   {
     id: 'activity-overview',
-    label: 'Weekly overview',
+    label: 'Activity overview',
     kind: 'overview',
     description: 'Active users, revenue, chats, channels and automation outcomes.',
     headlineDescription: '', trendTitle: '', trendHint: ''
@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="flex gap-2">
           <UButton
-            color="neutral"
+            color="primary"
             size="sm"
             :variant="colorMode.value === 'light' ? 'solid' : 'outline'"
             @click="colorMode.preference = 'light'"
@@ -421,7 +421,7 @@ onBeforeUnmount(() => {
             Light
           </UButton>
           <UButton
-            color="neutral"
+            color="primary"
             size="sm"
             :variant="colorMode.value === 'dark' ? 'solid' : 'outline'"
             @click="colorMode.preference = 'dark'"
@@ -448,7 +448,7 @@ onBeforeUnmount(() => {
                 v-for="preset in presetOptions"
                 :key="preset.id"
                 :variant="activePreset === preset.id ? 'solid' : 'outline'"
-                color="neutral"
+                color="primary"
                 size="sm"
                 @click="applyPreset(preset.days, preset.id)"
               >
@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
               <div class="flex gap-2">
                 <UButton
                   variant="outline"
-                  color="neutral"
+                  color="primary"
                   size="xs"
                   @click="selectAllUsers"
                 >
@@ -500,7 +500,7 @@ onBeforeUnmount(() => {
                 </UButton>
                 <UButton
                   variant="outline"
-                  color="neutral"
+                  color="primary"
                   size="xs"
                   @click="deselectAllUsers"
                 >

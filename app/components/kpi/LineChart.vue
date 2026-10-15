@@ -202,13 +202,13 @@ function formatUserLabelPreview(userLabels: string[]): string {
 
         <path
           :d="areaPath"
-          fill="rgba(59, 130, 246, 0.08)"
+          fill="rgba(20, 184, 166, 0.1)"
         />
 
         <path
           :d="linePath"
           fill="none"
-          stroke="#3b82f6"
+          stroke="var(--ui-primary)"
           stroke-width="3"
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -252,7 +252,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
             :cx="getX(point.index)"
             :cy="getY(point.value as number)"
             r="4"
-            fill="#3b82f6"
+            fill="var(--ui-primary)"
             stroke="white"
             stroke-width="2"
             class="pointer-events-none"

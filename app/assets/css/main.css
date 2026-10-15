@@ -31,10 +31,10 @@
 
 :root {
   --ui-primary: var(--color-teal-500);
-  --ui-bg: #f5f5f5;
-  --ui-bg-muted: #f4f4f5;
+  --ui-bg: #FAFCFC;
+  --ui-bg-muted: var(--color-teal-50);
   --ui-bg-elevated: white;
-  --ui-bg-accented: #e4e4e7;
+  --ui-bg-accented: var(--color-teal-100);
   --ui-bg-inverted: var(--color-zinc-900);
   --ui-text: var(--color-zinc-800);
   --ui-text-muted: var(--color-zinc-500);
@@ -45,7 +45,7 @@
   --ui-border-muted: var(--color-zinc-100);
   --ui-border-accented: var(--color-zinc-300);
   --ui-border-inverted: var(--color-zinc-900);
-  --ui-radius: 0.25rem;
+  --ui-radius: 0.75rem;
 
   --kpi-ink: var(--color-zinc-900);
   --kpi-panel: #ffffff;
@@ -54,10 +54,10 @@
 
 .dark {
   --ui-primary: var(--color-teal-400);
-  --ui-bg: #101010;
-  --ui-bg-muted: #181818;
-  --ui-bg-elevated: #1c1c1c;
-  --ui-bg-accented: #272727;
+  --ui-bg: #071212;
+  --ui-bg-muted: #0b1717;
+  --ui-bg-elevated: #0e1d1d;
+  --ui-bg-accented: #113131;
   --ui-bg-inverted: white;
   --ui-text: #F4F4F5;
   --ui-text-muted: #A1A1AA;
@@ -70,7 +70,7 @@
   --ui-border-inverted: white;
 
   --kpi-ink: #F4F4F5;
-  --kpi-panel: #1a1a1a;
+  --kpi-panel: #091212;
   --kpi-border: rgba(244, 244, 245, 0.08);
 }
 
@@ -85,13 +85,17 @@ body {
 .kpi-panel {
   background: var(--kpi-panel);
   border: 1px solid var(--kpi-border);
+  border-radius: 28px;
+  box-shadow: 0 4px 16px -4px rgba(20, 184, 166, 0.08);
 }
 .kpi-headline {
-  background: var(--ui-bg-muted);
-  color: var(--kpi-ink);
-  border: 1px solid var(--kpi-border);
+  background: var(--color-teal-700);
+  color: white;
+  border-radius: 24px;
+  padding: 1.25rem 1.5rem;
 }
-.kpi-headline p { color: inherit; }
+
+input[type="checkbox"] { accent-color: var(--ui-primary); }
 
 .kpi-label {
   color: rgba(24, 24, 27, 0.62);
@@ -104,15 +108,15 @@ body {
 .dark .bg-white\/70,
 .dark .bg-white\/68,
 .dark .bg-white\/60 {
-  background-color: #202020 !important;
+  background-color: #0f1717 !important;
 }
 
 .dark .bg-zinc-100\/70 {
-  background-color: rgba(24, 24, 27, 0.78) !important;
+  background-color: #132323 !important;
 }
 
 .dark .hover\:bg-zinc-100\/80:hover {
-  background-color: rgba(24, 24, 27, 0.82) !important;
+  background-color: #143030 !important;
 }
 
 .dark .border-black\/6 {

@@ -17,8 +17,8 @@ const maximum = computed(() => Math.max(1, ...props.points.map(point => point.va
         v-for="(point, index) in points"
         :key="index"
         tabindex="0"
-        class="group relative flex-1 min-w-0 rounded-[2px] bg-zinc-400/60 dark:bg-zinc-600 outline-offset-2"
-        :class="{ '!bg-blue-500': index === points.length - 1 }"
+        class="group relative flex-1 min-w-0 rounded-md bg-teal-600/30 dark:bg-teal-400/30 outline-offset-2"
+        :class="{ '!bg-teal-600 dark:!bg-teal-400': index === points.length - 1 }"
         :style="{ height: `${point.value === null ? 0 : Math.max(point.value / maximum * 100, 2)}%` }"
         :aria-label="`${point.label}: ${point.value === null ? '—' : formatter ? formatter(point.value) : point.value}`"
       >

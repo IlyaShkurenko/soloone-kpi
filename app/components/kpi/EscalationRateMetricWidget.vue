@@ -89,14 +89,14 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
     <div class="px-5 py-5 space-y-5">
       <div
         v-if="loading"
-        class="rounded-lg border border-black/8 bg-white/70 px-4 py-10 text-center text-zinc-500"
+        class="rounded-2xl border border-black/8 bg-white/70 px-4 py-10 text-center text-zinc-500"
       >
         Loading metric…
       </div>
 
       <div
         v-else-if="error"
-        class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-5 text-rose-700"
+        class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-rose-700"
       >
         {{ error }}
       </div>
@@ -106,7 +106,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
           <div
             v-for="item in summaryItems"
             :key="item.label"
-            class="rounded-lg border border-black/8 bg-white/72 px-4 py-4"
+            class="rounded-2xl border border-black/8 bg-white/72 px-4 py-4"
           >
             <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
               {{ item.label }}
@@ -117,7 +117,7 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
           </div>
         </div>
 
-        <div class="rounded-lg border border-black/8 bg-white/60 px-4 py-4">
+        <div class="rounded-2xl border border-black/8 bg-white/60 px-4 py-4">
           <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
             Recorded AI Attempts
           </p>
