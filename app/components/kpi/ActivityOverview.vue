@@ -10,10 +10,12 @@ const channelMode = ref<'chats' | 'messages'>('chats')
 const currencies = computed(() => [...new Set([
   ...(props.data?.series ?? []), ...(props.data ? [props.data.current] : [])
 ].flatMap(period => period.revenue.map(item => item.currency)))].sort())
-const channels = [
+const channels = computed(() => [
   { id: 'whatsapp', label: 'WhatsApp' }, { id: 'soloone', label: 'Fan2You' },
   { id: 'telegram', label: 'Telegram' }, { id: 'sms', label: 'SMS' }
-]
+].sort((a, b) => props.data
+  ? channelCount(props.data.current, b.id) - channelCount(props.data.current, a.id)
+  : 0))
 const categories = [
   { key: 'automatedRate', count: 'automated', label: 'Fully Automated', description: 'AI replies sent without approval', color: 'bg-teal-600' },
   { key: 'acceptedRate', count: 'accepted', label: 'AI-Draft accepted', description: 'Approved and sent, including edited drafts', color: 'bg-sky-500' },
