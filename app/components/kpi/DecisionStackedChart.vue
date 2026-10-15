@@ -74,7 +74,7 @@ const segments = [
 </script>
 
 <template>
-  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-visible">
+  <div class="relative w-full rounded-lg border border-black/8 bg-white/70 overflow-visible">
     <div
       v-if="points.length === 0"
       class="h-72 flex items-center justify-center text-sm text-zinc-500"
@@ -111,8 +111,12 @@ const segments = [
                   : 'left-1/2 -translate-x-1/2'
             "
           >
-            <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">{{ hoveredPoint.label }}</p>
-            <p class="mt-1 text-sm font-medium">{{ hoveredPoint.totalDecisions }} decisions</p>
+            <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">
+              {{ hoveredPoint.label }}
+            </p>
+            <p class="mt-1 text-sm font-medium">
+              {{ hoveredPoint.totalDecisions }} decisions
+            </p>
             <p class="mt-2 text-xs text-white/72">
               {{ hoveredPoint.userLabels.length === 1 ? 'User' : 'Users' }}:
               {{ formatUserLabelPreview(hoveredPoint.userLabels) }}
@@ -139,7 +143,7 @@ const segments = [
                 v-for="segment in segments"
                 :key="segment.key"
                 :class="segment.color"
-                :style="{ height: `${Math.max(point[segment.key] * 100, point[segment.key] > 0 ? 2 : 0)}%` }"
+                :style="{ height: `${point[segment.key] * 100}%` }"
               />
             </div>
           </div>

@@ -1,0 +1,325 @@
+<script setup lang="ts">
+import type { ActivityOverviewMetric, ActivityPeriod } from '~/types/kpi'
+
+const props = defineProps<{
+  data: ActivityOverviewMetric | null
+  loading?: boolean
+  error?: string | null
+}>()
+const channelMode = ref<'chats' | 'messages'>('chats')
+const currencies = computed(() => [...new Set([
+  ...(props.data?.series ?? []), ...(props.data ? [props.data.current, props.data.previous] : [])
+].flatMap(period => period.revenue.map(item => item.currency)))].sort())
+const channels = [
+  { id: 'whatsapp', label: 'WhatsApp' }, { id: 'soloone', label: 'Fan2You' },
+  { id: 'telegram', label: 'Telegram' }, { id: 'sms', label: 'SMS' }
+]
+const categories = [
+  { key: 'automatedRate', count: 'automated', label: 'Fully Automated', description: 'AI replies sent without approval', color: 'bg-blue-500' },
+  { key: 'acceptedRate', count: 'accepted', label: 'AI-Draft accepted', description: 'Approved and sent, including edited drafts', color: 'bg-orange-500' },
+  { key: 'manualOrDeclinedRate', count: 'manualOrDeclined', label: 'Not automated / AI-Draft declined', description: 'Non-AI messages and cancelled drafts', color: 'bg-zinc-500' }
+] as const
+
+function shortDate(value: string) {
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
+}
+function periodLabel(period: ActivityPeriod) {
+  return `${shortDate(period.startDate)} – ${shortDate(period.endDate)}`
+}
+function signed(value: number) {
+  return `${value > 0 ? '+' : ''}${value.toLocaleString('en-GB')}`
+}
+function percent(value: number | null) {
+  return value === null ? '—' : `${(value * 100).toFixed(1)}%`
+}
+function rateDelta(current: number | null, previous: number | null) {
+  if (current === null || previous === null) return 'No comparable outcomes'
+  const delta = (current - previous) * 100
+  return `${delta > 0 ? '+' : ''}${delta.toFixed(1)} pp vs. previous period`
+}
+function money(value: number | null, currency: string) {
+  if (value === null) return '—'
+  return new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 2 }).format(value / 100)
+}
+function revenue(period: ActivityPeriod, currency: string, perUser = false) {
+  const item = period.revenue.find(row => row.currency === currency)
+  return perUser ? (period.activeUsers ? (item?.perActiveUserMinor ?? 0) : null) : (item?.grossMinor ?? 0)
+}
+function revenueDelta(currency: string, perUser = false) {
+  if (!props.data) return ''
+  const current = revenue(props.data.current, currency, perUser)
+  const previous = revenue(props.data.previous, currency, perUser)
+  if (current === null || previous === null) return 'No comparable active users'
+  const delta = current - previous
+  return `${delta > 0 ? '+' : ''}${money(delta, currency)} vs. previous period`
+}
+function channelCount(period: ActivityPeriod, channel: string) {
+  return period.channels.find(row => row.channel === channel)?.[channelMode.value] ?? 0
+}
+function channelShare(period: ActivityPeriod, channel: string) {
+  const total = channelMode.value === 'chats' ? period.activeChats : period.messages
+  return percent(total > 0 ? channelCount(period, channel) / total : null)
+}
+</script>
+
+<template>
+  <section
+    class="space-y-5"
+    aria-label="Weekly overview"
+  >
+    <div
+      v-if="loading"
+      class="kpi-panel rounded-xl p-8 text-center text-zinc-500"
+    >
+      Loading weekly overview…
+    </div>
+    <div
+      v-else-if="error"
+      class="kpi-panel rounded-xl p-5 text-rose-700"
+    >
+      {{ error }}
+    </div>
+    <template v-else-if="data">
+      <div>
+        <h2 class="text-lg font-semibold">
+          Weekly overview · {{ periodLabel(data.current) }}
+        </h2>
+        <p class="text-sm text-zinc-500 mt-1">
+          Compared with {{ periodLabel(data.previous) }} · Trends cover the selected date range
+        </p>
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-3">
+        <article class="kpi-panel rounded-xl p-5">
+          <h3 class="font-medium">
+            Weekly Active Users
+          </h3>
+          <p class="text-sm text-zinc-500 mt-2">
+            Creators with sent or received messages
+          </p>
+          <p class="text-3xl tabular-nums mt-4">
+            {{ data.current.activeUsers }}
+          </p>
+          <p class="text-xs text-zinc-500 mt-2">
+            {{ signed(data.current.activeUsers - data.previous.activeUsers) }} vs. previous period
+          </p>
+          <KpiSparkBars :points="data.series.map(period => ({ label: periodLabel(period), value: period.activeUsers }))" />
+        </article>
+        <article
+          v-for="perUser in [false, true]"
+          :key="String(perUser)"
+          class="kpi-panel rounded-xl p-5"
+        >
+          <h3 class="font-medium">
+            {{ perUser ? 'Revenue per Active User' : 'Total Revenue (GMV)' }}
+          </h3>
+          <p class="text-sm text-zinc-500 mt-2">
+            {{ perUser ? 'GMV ÷ messaging-active creators' : 'Gross completed creator revenue' }}
+          </p>
+          <p
+            v-if="!currencies.length"
+            class="text-zinc-500 mt-5"
+          >
+            No completed revenue in this range.
+          </p>
+          <div
+            v-for="currency in currencies"
+            :key="currency"
+            class="mt-4"
+          >
+            <p class="text-3xl tabular-nums">
+              {{ money(revenue(data.current, currency, perUser), currency) }} <span class="text-xs text-zinc-500">{{ currency }}</span>
+            </p>
+            <p class="text-xs text-zinc-500 mt-2">
+              {{ revenueDelta(currency, perUser) }}
+            </p>
+            <KpiSparkBars
+              :points="data.series.map(period => ({ label: periodLabel(period), value: revenue(period, currency, perUser) }))"
+              :formatter="value => money(value, currency)"
+            />
+          </div>
+        </article>
+      </div>
+
+      <h2 class="text-lg font-semibold pt-2">
+        Chats
+      </h2>
+      <div class="grid gap-4 xl:grid-cols-2">
+        <article class="kpi-panel rounded-xl p-5">
+          <h3 class="font-medium">
+            Total Active Chats
+          </h3>
+          <p class="text-sm text-zinc-500 mt-2">
+            Conversations with sent or received messages
+          </p>
+          <p class="text-3xl tabular-nums mt-4">
+            {{ data.current.activeChats }}
+          </p>
+          <p class="text-xs text-zinc-500 mt-2">
+            {{ signed(data.current.activeChats - data.previous.activeChats) }} vs. previous period
+          </p>
+          <KpiSparkBars :points="data.series.map(period => ({ label: periodLabel(period), value: period.activeChats }))" />
+        </article>
+        <article class="kpi-panel rounded-xl p-5 min-w-0">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-medium">
+              Channel split
+            </h3>
+            <div class="flex gap-1">
+              <UButton
+                v-for="mode in (['chats', 'messages'] as const)"
+                :key="mode"
+                size="xs"
+                color="neutral"
+                :variant="channelMode === mode ? 'solid' : 'outline'"
+                @click="channelMode = mode"
+              >
+                {{ mode === 'chats' ? 'Chats' : 'Messages' }}
+              </UButton>
+            </div>
+          </div>
+          <div class="overflow-x-auto mt-4">
+            <table class="w-full text-sm whitespace-nowrap">
+              <thead class="text-xs text-zinc-500">
+                <tr>
+                  <th class="text-left py-2 font-normal">
+                    Channel
+                  </th><th class="font-normal text-right px-3">
+                    {{ channelMode === 'chats' ? 'Chats' : 'Messages' }}
+                  </th><th class="font-normal text-right px-3">
+                    Share
+                  </th><th class="font-normal text-right px-3">
+                    Previous
+                  </th><th class="font-normal text-right">
+                    Δ
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="channel in channels"
+                  :key="channel.id"
+                  class="border-t border-black/10"
+                >
+                  <td class="py-3">
+                    {{ channel.label }}
+                  </td><td class="text-right px-3 tabular-nums">
+                    {{ channelCount(data.current, channel.id) }}
+                  </td><td class="text-right px-3">
+                    {{ channelShare(data.current, channel.id) }}
+                  </td><td class="text-right px-3">
+                    {{ channelCount(data.previous, channel.id) }}
+                  </td><td class="text-right">
+                    {{ signed(channelCount(data.current, channel.id) - channelCount(data.previous, channel.id)) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <div class="pt-2">
+        <h2 class="text-lg font-semibold">
+          Message Automation
+        </h2>
+        <p class="text-sm text-zinc-500 mt-1">
+          Share of recorded outcomes: sent messages and declined drafts.
+        </p>
+      </div>
+      <div class="grid gap-4 xl:grid-cols-3">
+        <article
+          v-for="category in categories"
+          :key="category.key"
+          class="kpi-panel rounded-xl p-5"
+        >
+          <h3 class="font-medium">
+            {{ category.label }}
+          </h3>
+          <p class="text-sm text-zinc-500 mt-2">
+            {{ category.description }}
+          </p>
+          <p class="text-3xl tabular-nums mt-4">
+            {{ percent(data.current.automation[category.key]) }}
+          </p>
+          <p class="text-xs text-zinc-500 mt-2">
+            {{ data.current.automation[category.count] }} outcomes · {{ rateDelta(data.current.automation[category.key], data.previous.automation[category.key]) }}
+          </p>
+        </article>
+      </div>
+      <article class="kpi-panel rounded-xl p-5">
+        <h3 class="font-medium">
+          Trend: share by outcome
+        </h3>
+        <p class="text-sm text-zinc-500 mt-2">
+          The three categories add up to 100% before rounding. Empty weeks have no bar.
+        </p>
+        <p
+          v-if="data.series.some(period => period.automation.unclassified > 0)"
+          class="text-sm text-amber-700 dark:text-amber-300 mt-2"
+        >
+          {{ data.series.reduce((sum, period) => sum + period.automation.unclassified, 0) }} historical AI messages have no recorded approval/auto-send outcome and are excluded from these percentages.
+          Latest period: {{ data.current.automation.unclassified }} unclassified.
+        </p>
+        <div class="flex flex-wrap gap-4 text-xs text-zinc-500 mt-4">
+          <span
+            v-for="category in categories"
+            :key="category.key"
+            class="flex items-center gap-2"
+          ><span
+            class="w-2.5 h-2.5 rounded-sm"
+            :class="category.color"
+          />{{ category.label }}</span>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <div class="h-48 flex flex-col justify-between text-xs text-zinc-500">
+            <span>100%</span><span>50%</span><span>0%</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div
+              class="flex gap-2 h-48 border-b border-black/10"
+              role="img"
+              aria-label="Weekly automation outcome distribution"
+            >
+              <div
+                v-for="period in data.series"
+                :key="period.startDate"
+                class="flex-1 min-w-0 h-full flex flex-col-reverse group relative"
+                tabindex="0"
+                :aria-label="`${periodLabel(period)}: ${period.automation.total} classified outcomes`"
+              >
+                <div
+                  v-for="category in categories"
+                  :key="category.key"
+                  :class="category.color"
+                  :style="{ height: `${(period.automation[category.key] ?? 0) * 100}%` }"
+                />
+                <div class="hidden group-hover:block group-focus:block absolute z-20 top-0 left-1/2 -translate-x-1/2 w-56 bg-zinc-950 text-white text-xs rounded-md p-3 shadow-lg pointer-events-none">
+                  <p class="font-medium mb-2">
+                    {{ periodLabel(period) }}
+                  </p>
+                  <p
+                    v-for="category in categories"
+                    :key="category.key"
+                    class="mt-1"
+                  >
+                    {{ category.label }}: {{ percent(period.automation[category.key]) }} ({{ period.automation[category.count] }})
+                  </p>
+                  <p
+                    v-if="period.automation.unclassified"
+                    class="mt-2"
+                  >
+                    Unclassified: {{ period.automation.unclassified }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between gap-3 text-xs text-zinc-500 mt-2">
+              <span>{{ data.series[0] ? periodLabel(data.series[0]) : '' }}</span><span>{{ periodLabel(data.current) }}</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </template>
+  </section>
+</template>

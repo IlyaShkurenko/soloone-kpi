@@ -7,7 +7,7 @@ export interface MetricDescriptor {
   id: string
   label: string
   description: string
-  kind: 'duration' | 'decision' | 'rate'
+  kind: 'duration' | 'decision' | 'rate' | 'overview'
   headlineDescription: string
   trendTitle: string
   trendHint: string
@@ -192,4 +192,31 @@ export interface AiResponseDecisionMetric {
   series: AiResponseDecisionSeriesPoint[]
 }
 
-export type KpiMetric = DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric | AiReplyRateMetric | AiEscalationRateMetric
+export type KpiMetric = ActivityOverviewMetric | DurationMetric | AiResponseDecisionMetric | AiAutomationRateMetric | AiReplyRateMetric | AiEscalationRateMetric
+
+export interface ActivityPeriod {
+  startDate: string
+  endDate: string
+  activeUsers: number
+  activeChats: number
+  messages: number
+  revenue: Array<{ currency: string, grossMinor: number, perActiveUserMinor: number | null }>
+  channels: Array<{ channel: string, chats: number, messages: number }>
+  automation: {
+    automated: number
+    accepted: number
+    manualOrDeclined: number
+    unclassified: number
+    total: number
+    automatedRate: number | null
+    acceptedRate: number | null
+    manualOrDeclinedRate: number | null
+  }
+}
+
+export interface ActivityOverviewMetric {
+  metricId: 'activity-overview'
+  current: ActivityPeriod
+  previous: ActivityPeriod
+  series: ActivityPeriod[]
+}

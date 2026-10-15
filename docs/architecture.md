@@ -12,7 +12,7 @@ This project is a focused Nuxt dashboard for SoloOne product and AI-response met
 - `nuxt.config.ts` sets the backend API base, defaulting to `http://localhost:9001`.
 - The preview script uses port `9003`.
 
-The current dashboard supports user selection, date ranges, and metrics covering first AI interaction, first transaction, AI-response decisions, automation rate, reply rate, and escalation rate.
+The dashboard supports user/date filters, weekly active creators, GMV and revenue per active creator by currency, active chats and channel splits, automation outcomes, first AI interaction, first transaction, AI-response decisions, automation rate, reply rate, and escalation rate. See [metric and filter contracts](features/kpi-dashboard.md). Duration metrics use signup cohorts; weekly activity and existing AI rates use event dates. Filter changes invalidate older requests before new results can be displayed.
 
 ## Contract boundary
 

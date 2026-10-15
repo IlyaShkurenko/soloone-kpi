@@ -6,7 +6,7 @@ const props = defineProps<{
 
 const width = 760
 const height = 240
-const padding = { top: 18, right: 16, bottom: 36, left: 52 }
+const padding = { top: 18, right: 32, bottom: 36, left: 64 }
 const innerWidth = width - padding.left - padding.right
 const innerHeight = height - padding.top - padding.bottom
 const hoveredPointIndex = ref<number | null>(null)
@@ -19,12 +19,12 @@ const validPoints = computed(() =>
 
 const minValue = computed(() => {
   if (validPoints.value.length === 0) return 0
-  return Math.min(...validPoints.value.map(point => point.value as number))
+  return Math.min(0, ...validPoints.value.map(point => point.value as number))
 })
 
 const maxValue = computed(() => {
   if (validPoints.value.length === 0) return 0
-  return Math.max(...validPoints.value.map(point => point.value as number))
+  return Math.max(1, ...validPoints.value.map(point => point.value as number))
 })
 
 const yRange = computed(() => {
@@ -66,7 +66,7 @@ const areaPath = computed(() => {
 
   return [
     `M ${getX(first!.index)} ${baselineY}`,
-    ...validPoints.value.map((point) => `L ${getX(point.index)} ${getY(point.value as number)}`),
+    ...validPoints.value.map(point => `L ${getX(point.index)} ${getY(point.value as number)}`),
     `L ${getX(last!.index)} ${baselineY}`,
     'Z'
   ].join(' ')
@@ -142,7 +142,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
 </script>
 
 <template>
-  <div class="relative w-full rounded-2xl border border-black/8 bg-white/70 overflow-visible">
+  <div class="relative w-full rounded-lg border border-black/8 bg-white/70 overflow-visible">
     <div
       v-if="validPoints.length === 0"
       class="h-60 flex items-center justify-center text-sm text-zinc-500"
@@ -164,8 +164,12 @@ function formatUserLabelPreview(userLabels: string[]): string {
         ]"
         :style="{ left: hoveredPoint.left, top: hoveredPoint.top }"
       >
-        <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">{{ hoveredPoint.label }}</p>
-        <p class="text-sm font-medium mt-1">{{ formatter(hoveredPoint.value) }}</p>
+        <p class="text-[11px] uppercase tracking-[0.16em] text-white/60">
+          {{ hoveredPoint.label }}
+        </p>
+        <p class="text-sm font-medium mt-1">
+          {{ formatter(hoveredPoint.value) }}
+        </p>
         <p class="text-xs text-white/72 mt-2">
           {{ hoveredPoint.userLabels.length === 1 ? 'User' : 'Users' }}:
           {{ formatUserLabelPreview(hoveredPoint.userLabels) }}
@@ -179,47 +183,41 @@ function formatUserLabelPreview(userLabels: string[]): string {
         role="img"
         aria-label="Metric trend chart"
       >
-      <defs>
-        <linearGradient id="kpi-line-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="rgba(15, 118, 110, 0.36)" />
-          <stop offset="100%" stop-color="rgba(15, 118, 110, 0.03)" />
-        </linearGradient>
-      </defs>
 
-      <line
-        :x1="padding.left"
-        :x2="width - padding.right"
-        :y1="padding.top + innerHeight"
-        :y2="padding.top + innerHeight"
-        stroke="rgba(24, 24, 27, 0.12)"
-      />
+        <line
+          :x1="padding.left"
+          :x2="width - padding.right"
+          :y1="padding.top + innerHeight"
+          :y2="padding.top + innerHeight"
+          stroke="var(--ui-border)"
+        />
 
-      <line
-        :x1="padding.left"
-        :x2="width - padding.right"
-        :y1="padding.top"
-        :y2="padding.top"
-        stroke="rgba(24, 24, 27, 0.06)"
-      />
+        <line
+          :x1="padding.left"
+          :x2="width - padding.right"
+          :y1="padding.top"
+          :y2="padding.top"
+          stroke="var(--ui-border-muted)"
+        />
 
-      <path
-        :d="areaPath"
-        fill="url(#kpi-line-fill)"
-      />
+        <path
+          :d="areaPath"
+          fill="rgba(59, 130, 246, 0.08)"
+        />
 
-      <path
-        :d="linePath"
-        fill="none"
-        stroke="#0f766e"
-        stroke-width="3"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
+        <path
+          :d="linePath"
+          fill="none"
+          stroke="#3b82f6"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
 
         <text
           :x="padding.left - 8"
           :y="padding.top - 2"
-          fill="rgba(24, 24, 27, 0.58)"
+          fill="var(--ui-text-muted)"
           font-size="12"
           text-anchor="end"
         >
@@ -229,7 +227,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
         <text
           :x="padding.left - 8"
           :y="padding.top + innerHeight + 14"
-          fill="rgba(24, 24, 27, 0.58)"
+          fill="var(--ui-text-muted)"
           font-size="12"
           text-anchor="end"
         >
@@ -254,7 +252,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
             :cx="getX(point.index)"
             :cy="getY(point.value as number)"
             r="4"
-            fill="#0f766e"
+            fill="#3b82f6"
             stroke="white"
             stroke-width="2"
             class="pointer-events-none"
@@ -266,7 +264,7 @@ function formatUserLabelPreview(userLabels: string[]): string {
           :key="`${axisLabel.label}-${axisLabel.x}`"
           :x="axisLabel.x"
           :y="height - 10"
-          fill="rgba(24, 24, 27, 0.58)"
+          fill="var(--ui-text-muted)"
           font-size="12"
           text-anchor="middle"
         >

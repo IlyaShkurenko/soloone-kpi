@@ -31,7 +31,7 @@ const chartPoints = computed(() => {
     return []
   }
 
-  return props.data.series.map((point) => ({
+  return props.data.series.map(point => ({
     label: formatBucketLabel(point.bucketStart, props.data!.granularity),
     value: point.autoSentRate,
     userLabels: point.userLabels
@@ -42,49 +42,61 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
   const date = new Date(`${value}T00:00:00Z`)
 
   if (granularity === 'month') {
-    return new Intl.DateTimeFormat('en-GB', { month: 'short', year: '2-digit' }).format(date)
+    return new Intl.DateTimeFormat('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' }).format(date)
   }
 
   if (granularity === 'week') {
-    return `Week of ${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)}`
+    return `Week of ${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' }).format(date)}`
   }
 
-  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(date)
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' }).format(date)
 }
 </script>
 
 <template>
-  <section class="kpi-panel rounded-[28px] overflow-hidden">
-    <div class="px-6 py-5 border-b border-black/8">
+  <section class="kpi-panel rounded-xl overflow-hidden">
+    <div class="px-5 py-4 border-b border-black/8">
       <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
-          <p class="text-xs uppercase tracking-[0.24em] text-zinc-500">{{ descriptor.id }}</p>
-          <h2 class="text-2xl font-semibold text-zinc-950 mt-2">{{ descriptor.label }}</h2>
-          <p class="text-sm text-zinc-600 mt-2 max-w-3xl">{{ descriptor.description }}</p>
+          <p class="text-xs uppercase tracking-[0.24em] text-zinc-500">
+            {{ descriptor.id }}
+          </p>
+          <h2 class="text-xl font-semibold text-zinc-950 mt-1">
+            {{ descriptor.label }}
+          </h2>
+          <p class="text-sm text-zinc-600 mt-2 max-w-3xl">
+            {{ descriptor.description }}
+          </p>
         </div>
 
         <div
           v-if="data"
-          class="rounded-2xl bg-teal-700 text-white px-6 py-5 min-w-64"
+          class="rounded-lg kpi-headline px-4 py-3 md:max-w-64"
         >
-          <p class="text-xs uppercase tracking-[0.2em] text-white/70">Headline</p>
-          <p class="text-2xl font-semibold mt-2">{{ formatPercent(data.summary.autoSentRate) }}</p>
-          <p class="text-sm text-white/72 mt-1">{{ descriptor.headlineDescription }}</p>
+          <p class="text-xs uppercase tracking-[0.2em] text-white/70">
+            Headline
+          </p>
+          <p class="text-2xl font-semibold mt-2">
+            {{ formatPercent(data.summary.autoSentRate) }}
+          </p>
+          <p class="text-sm text-white/72 mt-1">
+            {{ descriptor.headlineDescription }}
+          </p>
         </div>
       </div>
     </div>
 
-    <div class="px-6 py-6 space-y-6">
+    <div class="px-5 py-5 space-y-5">
       <div
         v-if="loading"
-        class="rounded-2xl border border-black/8 bg-white/70 px-4 py-10 text-center text-zinc-500"
+        class="rounded-lg border border-black/8 bg-white/70 px-4 py-10 text-center text-zinc-500"
       >
         Loading metric…
       </div>
 
       <div
         v-else-if="error"
-        class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-rose-700"
+        class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-5 text-rose-700"
       >
         {{ error }}
       </div>
@@ -94,26 +106,42 @@ function formatBucketLabel(value: string, granularity: 'day' | 'week' | 'month')
           <div
             v-for="item in summaryItems"
             :key="item.label"
-            class="rounded-2xl border border-black/8 bg-white/72 px-4 py-4"
+            class="rounded-lg border border-black/8 bg-white/72 px-4 py-4"
           >
-            <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ item.label }}</p>
-            <p class="text-xl font-semibold text-zinc-950 mt-2">{{ item.value }}</p>
+            <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
+              {{ item.label }}
+            </p>
+            <p class="text-xl font-semibold text-zinc-950 mt-2">
+              {{ item.value }}
+            </p>
           </div>
         </div>
 
-        <div class="rounded-2xl border border-black/8 bg-white/60 px-4 py-4">
-          <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Successful AI Replies</p>
-          <p class="text-2xl font-semibold text-zinc-950 mt-2">{{ data.summary.totalSuccessfulAiReplies }}</p>
-          <p class="text-sm text-zinc-500 mt-1">Recorded auto-sent vs approved-and-sent AI outgoing replies.</p>
+        <div class="rounded-lg border border-black/8 bg-white/60 px-4 py-4">
+          <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
+            Successful AI Replies
+          </p>
+          <p class="text-xl font-semibold text-zinc-950 mt-1">
+            {{ data.summary.totalSuccessfulAiReplies }}
+          </p>
+          <p class="text-sm text-zinc-500 mt-1">
+            Recorded auto-sent vs approved-and-sent AI outgoing replies.
+          </p>
         </div>
 
         <div class="space-y-3">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Trend</p>
-              <h3 class="text-lg font-semibold text-zinc-950">{{ descriptor.trendTitle }}</h3>
+              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                Trend
+              </p>
+              <h3 class="text-lg font-semibold text-zinc-950">
+                {{ descriptor.trendTitle }}
+              </h3>
             </div>
-            <p class="text-sm text-zinc-500">{{ descriptor.trendHint }}</p>
+            <p class="text-sm text-zinc-500">
+              {{ descriptor.trendHint }}
+            </p>
           </div>
 
           <KpiLineChart

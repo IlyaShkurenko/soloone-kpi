@@ -5,8 +5,7 @@ import type {
   AiReplyRateMetric,
   AiResponseDecisionMetric,
   DurationMetric,
-  FirstAiInteractionMetric,
-  FirstTransactionMetric,
+  ActivityOverviewMetric,
   KpiMetric,
   KpiUserOption,
   MetricDescriptor
@@ -23,13 +22,20 @@ const colorMode = useColorMode()
 
 const availableMetrics: MetricDescriptor[] = [
   {
+    id: 'activity-overview',
+    label: 'Weekly overview',
+    kind: 'overview',
+    description: 'Active users, revenue, chats, channels and automation outcomes.',
+    headlineDescription: '', trendTitle: '', trendHint: ''
+  },
+  {
     id: 'first-ai-interaction',
     label: 'Time to First AI Interaction',
     kind: 'duration',
     description: 'Measures the time from user signup to the first successful AI-generated outgoing message.',
     headlineDescription: 'Avg time from signup to first AI reply',
     trendTitle: 'Average time by signup cohort',
-    trendHint: 'Start point = signup timestamp'
+    trendHint: 'Date range filters signup dates'
   },
   {
     id: 'first-transaction',
@@ -38,7 +44,7 @@ const availableMetrics: MetricDescriptor[] = [
     description: 'Measures the time from user signup to the first completed provider revenue transaction.',
     headlineDescription: 'Avg time from signup to first completed revenue event',
     trendTitle: 'Average time to first revenue by signup cohort',
-    trendHint: 'Revenue types = gift, booking payment'
+    trendHint: 'Gifts, bookings and direct payments'
   },
   {
     id: 'ai-response-decisions',
@@ -51,7 +57,7 @@ const availableMetrics: MetricDescriptor[] = [
   },
   {
     id: 'ai-automation-rate',
-    label: 'AI Automation Rate',
+    label: 'Auto-send Share of AI Replies',
     kind: 'rate',
     description: 'Tracks the share of recorded successful AI-generated replies that were sent automatically without provider approval.',
     headlineDescription: 'Auto-sent share of recorded successful AI replies',
@@ -91,13 +97,14 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-automation-rate', 'ai-reply-rate', 'ai-escalation-rate'])
+const selectedMetricIds = ref<string[]>(['activity-overview', 'first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-automation-rate', 'ai-reply-rate', 'ai-escalation-rate'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
 const activePreset = ref<string>('90d')
 
 const metricStates = reactive<Record<string, MetricState>>({
+  'activity-overview': { loading: false, error: null, data: null },
   'first-ai-interaction': {
     loading: false,
     error: null,
@@ -131,6 +138,9 @@ const metricStates = reactive<Record<string, MetricState>>({
 })
 
 let refreshTimeout: ReturnType<typeof setTimeout> | null = null
+let requestVersion = 0
+let requestController: AbortController | null = null
+let ready = false
 
 const filteredUsers = computed(() => {
   const query = userSearch.value.trim().toLowerCase()
@@ -138,11 +148,11 @@ const filteredUsers = computed(() => {
     return users.value
   }
 
-  return users.value.filter((user) => user.label.toLowerCase().includes(query))
+  return users.value.filter(user => user.label.toLowerCase().includes(query))
 })
 
 const selectedMetricDescriptors = computed(() =>
-  availableMetrics.filter((metric) => selectedMetricIds.value.includes(metric.id))
+  availableMetrics.filter(metric => selectedMetricIds.value.includes(metric.id))
 )
 
 const durationMetricDescriptors = computed(() =>
@@ -174,6 +184,10 @@ const allUsersSelected = computed(() =>
 )
 
 const emptyStateMessage = computed(() => {
+  if (startDate.value && endDate.value && startDate.value > endDate.value) {
+    return 'Start date must be on or before end date.'
+  }
+
   if (selectedMetricIds.value.length === 0) {
     return 'Select at least one metric.'
   }
@@ -223,8 +237,8 @@ function selectAllUsers() {
   selectedUserIds.value = users.value.map(user => user.id)
 }
 
-function resetUsersToAll() {
-  selectedUserIds.value = users.value.map(user => user.id)
+function deselectAllUsers() {
+  selectedUserIds.value = []
 }
 
 function toggleMetric(metricId: string) {
@@ -244,8 +258,8 @@ async function fetchUsers() {
     const data = await $fetch<KpiUserOption[]>(`${config.public.apiBase}/api/kpi/users`)
     users.value = data
     selectedUserIds.value = data.map(user => user.id)
-  } catch (error: any) {
-    usersError.value = error?.data?.error || error?.message || 'Failed to load users'
+  } catch (error: unknown) {
+    usersError.value = error instanceof Error ? error.message : 'Failed to load users'
   } finally {
     usersLoading.value = false
   }
@@ -262,199 +276,62 @@ function buildMetricQuery(): Record<string, string> {
     query.endDate = endDate.value
   }
 
-  if (selectedUserIds.value.length > 0 && selectedUserIds.value.length < users.value.length) {
-    query.userIds = selectedUserIds.value.join(',')
-  }
+  query.userIds = [...selectedUserIds.value].sort().join(',')
 
   return query
 }
 
-async function fetchFirstAiInteractionMetric() {
-  const state = metricStates['first-ai-interaction']!
-  state.loading = true
-  state.error = null
-
-  try {
-    state.data = await $fetch<FirstAiInteractionMetric>(
-      `${config.public.apiBase}/api/kpi/metrics/first-ai-interaction`,
-      {
-        query: buildMetricQuery()
-      }
-    )
-  } catch (error: any) {
-    state.error = error?.data?.error || error?.message || 'Failed to load metric'
+function invalidateMetrics() {
+  requestVersion++
+  requestController?.abort()
+  if (refreshTimeout) clearTimeout(refreshTimeout)
+  for (const [id, state] of Object.entries(metricStates)) {
     state.data = null
-  } finally {
-    state.loading = false
-  }
-}
-
-async function fetchFirstTransactionMetric() {
-  const state = metricStates['first-transaction']!
-  state.loading = true
-  state.error = null
-
-  try {
-    state.data = await $fetch<FirstTransactionMetric>(
-      `${config.public.apiBase}/api/kpi/metrics/first-transaction`,
-      {
-        query: buildMetricQuery()
-      }
-    )
-  } catch (error: any) {
-    state.error = error?.data?.error || error?.message || 'Failed to load metric'
-    state.data = null
-  } finally {
-    state.loading = false
-  }
-}
-
-async function fetchAiResponseDecisionMetric() {
-  const state = metricStates['ai-response-decisions']!
-  state.loading = true
-  state.error = null
-
-  try {
-    state.data = await $fetch<AiResponseDecisionMetric>(
-      `${config.public.apiBase}/api/kpi/metrics/ai-response-decisions`,
-      {
-        query: buildMetricQuery()
-      }
-    )
-  } catch (error: any) {
-    state.error = error?.data?.error || error?.message || 'Failed to load metric'
-    state.data = null
-  } finally {
-    state.loading = false
-  }
-}
-
-async function fetchAiAutomationRateMetric() {
-  const state = metricStates['ai-automation-rate']!
-  state.loading = true
-  state.error = null
-
-  try {
-    state.data = await $fetch<AiAutomationRateMetric>(
-      `${config.public.apiBase}/api/kpi/metrics/ai-automation-rate`,
-      {
-        query: buildMetricQuery()
-      }
-    )
-  } catch (error: any) {
-    state.error = error?.data?.error || error?.message || 'Failed to load metric'
-    state.data = null
-  } finally {
-    state.loading = false
-  }
-}
-
-async function fetchAiReplyRateMetric() {
-  const state = metricStates['ai-reply-rate']!
-  state.loading = true
-  state.error = null
-
-  try {
-    state.data = await $fetch<AiReplyRateMetric>(
-      `${config.public.apiBase}/api/kpi/metrics/ai-reply-rate`,
-      {
-        query: buildMetricQuery()
-      }
-    )
-  } catch (error: any) {
-    state.error = error?.data?.error || error?.message || 'Failed to load metric'
-    state.data = null
-  } finally {
-    state.loading = false
-  }
-}
-
-async function fetchAiEscalationRateMetric() {
-  const state = metricStates['ai-escalation-rate']!
-  state.loading = true
-  state.error = null
-
-  try {
-    state.data = await $fetch<AiEscalationRateMetric>(
-      `${config.public.apiBase}/api/kpi/metrics/ai-escalation-rate`,
-      {
-        query: buildMetricQuery()
-      }
-    )
-  } catch (error: any) {
-    state.error = error?.data?.error || error?.message || 'Failed to load metric'
-    state.data = null
-  } finally {
-    state.loading = false
+    state.error = null
+    state.loading = !emptyStateMessage.value && selectedMetricIds.value.includes(id)
   }
 }
 
 async function refreshMetrics() {
-  for (const [metricId, state] of Object.entries(metricStates)) {
-    if (!selectedMetricIds.value.includes(metricId)) {
-      state.loading = false
-      state.error = null
-      state.data = null
-    }
-  }
+  invalidateMetrics()
+  if (emptyStateMessage.value) return
 
-  if (selectedMetricIds.value.length === 0 || selectedUserIds.value.length === 0) {
-    for (const state of Object.values(metricStates)) {
-      state.loading = false
-      state.error = null
-      state.data = null
+  const version = requestVersion
+  const controller = new AbortController()
+  requestController = controller
+  const query = buildMetricQuery()
+  await Promise.all(selectedMetricIds.value.map(async (id) => {
+    const state = metricStates[id]!
+    try {
+      const data = await $fetch<KpiMetric>(`${config.public.apiBase}/api/kpi/metrics/${id}`, {
+        query, signal: controller.signal
+      })
+      if (version === requestVersion) state.data = data
+    } catch (error: unknown) {
+      if (version !== requestVersion) return
+      state.error = error instanceof Error ? error.message : 'Failed to load metric'
+    } finally {
+      if (version === requestVersion) state.loading = false
     }
-    return
-  }
-
-  const loaders = selectedMetricIds.value.map(async (metricId) => {
-    if (metricId === 'first-ai-interaction') {
-      await fetchFirstAiInteractionMetric()
-      return
-    }
-
-    if (metricId === 'first-transaction') {
-      await fetchFirstTransactionMetric()
-      return
-    }
-
-    if (metricId === 'ai-response-decisions') {
-      await fetchAiResponseDecisionMetric()
-      return
-    }
-
-    if (metricId === 'ai-automation-rate') {
-      await fetchAiAutomationRateMetric()
-      return
-    }
-
-    if (metricId === 'ai-reply-rate') {
-      await fetchAiReplyRateMetric()
-      return
-    }
-
-    if (metricId === 'ai-escalation-rate') {
-      await fetchAiEscalationRateMetric()
-    }
-  })
-
-  await Promise.all(loaders)
+  }))
 }
 
 function queueRefresh() {
-  if (refreshTimeout) {
-    clearTimeout(refreshTimeout)
+  // Invalidate immediately: an old response can arrive during the debounce delay.
+  invalidateMetrics()
+  if (!emptyStateMessage.value) {
+    refreshTimeout = setTimeout(() => {
+      void refreshMetrics()
+    }, 180)
   }
-
-  refreshTimeout = setTimeout(() => {
-    void refreshMetrics()
-  }, 180)
 }
+
+const activityData = computed(() => metricStates['activity-overview']?.data as ActivityOverviewMetric | null)
 
 function getDurationMetricData(metricId: string): DurationMetric | null {
   const data = metricStates[metricId]?.data ?? null
 
-  if (!data || data.metricId === 'ai-response-decisions' || data.metricId === 'ai-automation-rate' || data.metricId === 'ai-reply-rate' || data.metricId === 'ai-escalation-rate') {
+  if (!data || !['first-ai-interaction', 'first-transaction'].includes(data.metricId)) {
     return null
   }
 
@@ -502,91 +379,68 @@ function getEscalationRateMetricData(metricId: string): AiEscalationRateMetric |
 }
 
 watch([startDate, endDate, selectedUserIds, selectedMetricIds], () => {
-  if (usersLoading.value || usersError.value) {
+  if (!ready || usersLoading.value || usersError.value) {
     return
   }
 
   queueRefresh()
-}, { deep: true })
+}, { deep: true, flush: 'sync' })
 
 onMounted(async () => {
   applyPreset(90, '90d')
   await fetchUsers()
-  await refreshMetrics()
+  ready = true
+  if (!usersError.value) await refreshMetrics()
+})
+onBeforeUnmount(() => {
+  requestVersion++
+  requestController?.abort()
+  if (refreshTimeout) clearTimeout(refreshTimeout)
 })
 </script>
 
 <template>
   <main class="kpi-shell px-4 py-5 md:px-6 lg:px-8">
-    <div class="max-w-[1500px] mx-auto space-y-6">
-      <section class="relative overflow-hidden rounded-[32px] kpi-panel">
-        <div class="absolute inset-0 kpi-grid opacity-70" />
-
-        <div class="relative px-6 py-8 md:px-8 lg:px-10">
-          <div class="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
-            <div class="max-w-3xl">
-              <p class="text-xs uppercase tracking-[0.28em] text-zinc-500">SoloOne KPI</p>
-              <h1 class="text-4xl md:text-5xl font-semibold text-zinc-950 mt-3">
-                KPI Dashboard
-              </h1>
-              <p class="text-base md:text-lg text-zinc-600 mt-4 max-w-2xl">
-                One public page with shared filters, selectable metrics, and progressively added KPI widgets.
-              </p>
-            </div>
-
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 min-w-full xl:min-w-[760px] xl:max-w-[820px]">
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
-                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Metrics</p>
-                <div class="flex items-start justify-center">
-                  <p class="text-4xl font-semibold tracking-tight tabular-nums leading-none">{{ selectedMetricIds.length }}</p>
-                </div>
-              </div>
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
-                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Users in Scope</p>
-                <div class="flex items-start justify-center">
-                  <p class="text-4xl font-semibold tracking-tight tabular-nums leading-none">{{ selectedUserIds.length }}</p>
-                </div>
-              </div>
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
-                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Range</p>
-                <div class="flex items-start justify-center">
-                  <p class="text-4xl font-semibold tracking-tight tabular-nums leading-none">
-                    {{ activePreset === 'custom' ? 'Custom' : activePreset.toUpperCase() }}
-                  </p>
-                </div>
-              </div>
-              <div class="rounded-2xl bg-white/72 border border-black/8 px-5 py-5 min-h-32 space-y-4 text-center">
-                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Theme</p>
-                <div class="flex flex-wrap justify-center gap-2">
-                  <UButton
-                    size="xs"
-                    color="neutral"
-                    :variant="colorMode.value === 'light' && colorMode.preference !== 'dark' ? 'solid' : 'outline'"
-                    @click="colorMode.preference = 'light'"
-                  >
-                    Light
-                  </UButton>
-                  <UButton
-                    size="xs"
-                    color="neutral"
-                    :variant="colorMode.value === 'dark' && colorMode.preference !== 'light' ? 'solid' : 'outline'"
-                    @click="colorMode.preference = 'dark'"
-                  >
-                    Dark
-                  </UButton>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div class="max-w-[1800px] mx-auto space-y-6">
+      <header class="flex flex-wrap items-center justify-between gap-4 py-2">
+        <div>
+          <h1 class="text-2xl font-semibold">
+            SoloOne KPI
+          </h1>
+          <p class="text-sm text-zinc-500 mt-1">
+            {{ selectedUserIds.length }} users selected · All dates in UTC
+          </p>
         </div>
-      </section>
+        <div class="flex gap-2">
+          <UButton
+            color="neutral"
+            size="sm"
+            :variant="colorMode.value === 'light' ? 'solid' : 'outline'"
+            @click="colorMode.preference = 'light'"
+          >
+            Light
+          </UButton>
+          <UButton
+            color="neutral"
+            size="sm"
+            :variant="colorMode.value === 'dark' ? 'solid' : 'outline'"
+            @click="colorMode.preference = 'dark'"
+          >
+            Dark
+          </UButton>
+        </div>
+      </header>
 
-      <section class="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <section class="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside class="space-y-6">
-          <section class="kpi-panel rounded-[28px] px-5 py-5 space-y-4">
+          <section class="kpi-panel rounded-xl px-5 py-5 space-y-4">
             <div>
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Global Filters</p>
-              <h2 class="text-xl font-semibold text-zinc-950 mt-2">Range</h2>
+              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                Global Filters
+              </p>
+              <h2 class="text-xl font-semibold text-zinc-950 mt-2">
+                Range
+              </h2>
             </div>
 
             <div class="flex flex-wrap gap-2">
@@ -602,7 +456,7 @@ onMounted(async () => {
               </UButton>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <label class="space-y-1.5">
                 <span class="text-xs uppercase tracking-[0.16em] kpi-label">Start Date</span>
                 <input
@@ -625,11 +479,15 @@ onMounted(async () => {
             </div>
           </section>
 
-          <section class="kpi-panel rounded-[28px] px-5 py-5 space-y-4">
-            <div class="flex items-start justify-between gap-3">
+          <section class="kpi-panel rounded-xl px-5 py-5 space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Global Filters</p>
-                <h2 class="text-xl font-semibold text-zinc-950 mt-2">Users</h2>
+                <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                  Global Filters
+                </p>
+                <h2 class="text-xl font-semibold text-zinc-950 mt-2">
+                  Users
+                </h2>
               </div>
               <div class="flex gap-2">
                 <UButton
@@ -638,15 +496,15 @@ onMounted(async () => {
                   size="xs"
                   @click="selectAllUsers"
                 >
-                  All
+                  Select all
                 </UButton>
                 <UButton
                   variant="outline"
                   color="neutral"
                   size="xs"
-                  @click="resetUsersToAll"
+                  @click="deselectAllUsers"
                 >
-                  Reset
+                  Deselect all users
                 </UButton>
               </div>
             </div>
@@ -655,25 +513,26 @@ onMounted(async () => {
               v-model="userSearch"
               icon="i-lucide-search"
               placeholder="Search users"
+              class="w-full"
             />
 
             <div
               v-if="usersLoading"
-              class="rounded-2xl border border-black/8 bg-white/70 px-4 py-6 text-sm text-zinc-500"
+              class="rounded-lg border border-black/8 bg-white/70 px-4 py-6 text-sm text-zinc-500"
             >
               Loading users…
             </div>
 
             <div
               v-else-if="usersError"
-              class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700"
+              class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700"
             >
               {{ usersError }}
             </div>
 
             <div
               v-else
-              class="rounded-2xl border border-black/8 bg-white/70 overflow-hidden"
+              class="rounded-lg border border-black/8 bg-white/70 overflow-hidden"
             >
               <div class="flex items-center justify-between px-4 py-3 border-b border-black/8 text-sm">
                 <span class="text-zinc-600">Selected {{ selectedUserIds.length }} of {{ users.length }}</span>
@@ -681,7 +540,7 @@ onMounted(async () => {
                   v-if="allUsersSelected"
                   class="text-teal-700 font-medium"
                 >
-                  All active users
+                  All
                 </span>
               </div>
 
@@ -694,26 +553,33 @@ onMounted(async () => {
                   <input
                     :checked="selectedUserIds.includes(user.id)"
                     type="checkbox"
-                    class="h-4 w-4 rounded border-black/20"
+                    class="h-4 w-4 shrink-0 rounded border-black/20"
                     @change="toggleUser(user.id)"
                   >
-                  <span class="text-sm text-zinc-800">{{ user.label }}</span>
+                  <span
+                    class="text-sm text-zinc-800 truncate"
+                    :title="user.label"
+                  >{{ user.label }}</span>
                 </label>
               </div>
             </div>
           </section>
 
-          <section class="kpi-panel rounded-[28px] px-5 py-5 space-y-4">
+          <section class="kpi-panel rounded-xl px-5 py-5 space-y-4">
             <div>
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Display</p>
-              <h2 class="text-xl font-semibold text-zinc-950 mt-2">Metrics</h2>
+              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                Display
+              </p>
+              <h2 class="text-xl font-semibold text-zinc-950 mt-2">
+                Metrics
+              </h2>
             </div>
 
             <div class="space-y-2">
               <label
                 v-for="metric in availableMetrics"
                 :key="metric.id"
-                class="block rounded-2xl border border-black/8 bg-white/72 px-4 py-3 cursor-pointer"
+                class="block rounded-lg border border-black/8 bg-white/72 px-4 py-3 cursor-pointer"
               >
                 <div class="flex items-start gap-3">
                   <input
@@ -724,7 +590,7 @@ onMounted(async () => {
                   >
                   <div>
                     <p class="font-medium text-zinc-950">{{ metric.label }}</p>
-                    <p class="text-sm text-zinc-600 mt-1">{{ metric.description }}</p>
+
                   </div>
                 </div>
               </label>
@@ -734,7 +600,7 @@ onMounted(async () => {
 
         <div
           v-if="emptyStateMessage"
-          class="rounded-[28px] border border-dashed border-black/12 bg-white/68 px-6 py-12 text-center text-zinc-500"
+          class="rounded-xl border border-dashed border-black/12 bg-white/68 px-6 py-12 text-center text-zinc-500"
         >
           {{ emptyStateMessage }}
         </div>
@@ -743,11 +609,19 @@ onMounted(async () => {
           v-else
           class="space-y-6"
         >
+          <KpiActivityOverview
+            v-if="selectedMetricIds.includes('activity-overview')"
+            :data="activityData"
+            :loading="metricStates['activity-overview']?.loading"
+            :error="metricStates['activity-overview']?.error"
+          />
+
           <KpiMetricWidget
             v-for="metric in durationMetricDescriptors"
             :key="metric.id"
             :descriptor="metric"
             :data="getDurationMetricData(metric.id)"
+            :selected-users="selectedUserIds.length"
             :loading="metricStates[metric.id]?.loading"
             :error="metricStates[metric.id]?.error"
           />
