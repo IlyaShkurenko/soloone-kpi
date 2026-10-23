@@ -10,17 +10,17 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:9001'
-    }
-  },
-
   colorMode: {
     preference: 'system',
     fallback: 'light',
     storageKey: 'soloone-kpi-color-mode',
     classSuffix: ''
+  },
+
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:9001'
+    }
   },
 
   devServer: {

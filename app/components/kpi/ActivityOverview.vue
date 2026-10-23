@@ -81,7 +81,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
             Active Users
           </h3>
           <p class="text-sm text-zinc-500 mt-2">
-            Creators with sent or received messages
+            Creators who sent messages manually or approved AI drafts
           </p>
           <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
             {{ data.current.activeUsers }}
@@ -97,7 +97,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
             {{ perUser ? 'Revenue per Active User' : 'Total Revenue (GMV)' }}
           </h3>
           <p class="text-sm text-zinc-500 mt-2">
-            {{ perUser ? 'GMV ÷ messaging-active creators' : 'Gross completed creator revenue' }}
+            {{ perUser ? 'GMV ÷ creators with manual or approved sends' : 'Gross completed creator revenue' }}
           </p>
           <p
             v-if="!currencies.length"

@@ -54,10 +54,10 @@
 
 .dark {
   --ui-primary: var(--color-teal-400);
-  --ui-bg: #071212;
-  --ui-bg-muted: #0b1717;
-  --ui-bg-elevated: #0e1d1d;
-  --ui-bg-accented: #113131;
+  --ui-bg: #101010;
+  --ui-bg-muted: #181818;
+  --ui-bg-elevated: #202020;
+  --ui-bg-accented: #282828;
   --ui-bg-inverted: white;
   --ui-text: #F4F4F5;
   --ui-text-muted: #A1A1AA;
@@ -70,7 +70,7 @@
   --ui-border-inverted: white;
 
   --kpi-ink: #F4F4F5;
-  --kpi-panel: #091212;
+  --kpi-panel: #181818;
   --kpi-border: rgba(244, 244, 245, 0.08);
 }
 
@@ -86,7 +86,7 @@ body {
   background: var(--kpi-panel);
   border: 1px solid var(--kpi-border);
   border-radius: 28px;
-  box-shadow: 0 4px 16px -4px rgba(20, 184, 166, 0.08);
+  box-shadow: none;
 }
 .kpi-headline {
   background: var(--color-teal-700);
@@ -108,15 +108,15 @@ input[type="checkbox"] { accent-color: var(--ui-primary); }
 .dark .bg-white\/70,
 .dark .bg-white\/68,
 .dark .bg-white\/60 {
-  background-color: #0f1717 !important;
+  background-color: #202020 !important;
 }
 
 .dark .bg-zinc-100\/70 {
-  background-color: #132323 !important;
+  background-color: #282828 !important;
 }
 
 .dark .hover\:bg-zinc-100\/80:hover {
-  background-color: #143030 !important;
+  background-color: #303030 !important;
 }
 
 .dark .border-black\/6 {

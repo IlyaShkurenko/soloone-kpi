@@ -220,3 +220,17 @@ export interface ActivityOverviewMetric {
   previous: ActivityPeriod
   series: ActivityPeriod[]
 }
+
+export interface NumberStatistics {
+  startDate: string
+  endDate: string
+  updatedAt: string
+  history: { available: boolean, from: string | null, through: string | null, checkedAt: string, partial: boolean }
+  authorizationLosses: number | null
+  affectedNumbers: number | null
+  nonWarmingAffected: number | null
+  nonWarmingRate: number | null
+  pipeline: { total: number, warming: number, nonWarming: number }
+  connectionStatus: Array<{ id: string, label: string, warming: number, nonWarming: number }>
+  daily: Array<{ date: string, count: number }>
+}

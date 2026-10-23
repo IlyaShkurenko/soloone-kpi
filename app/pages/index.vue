@@ -75,6 +75,7 @@ const availableMetrics: MetricDescriptor[] = [
 ]
 
 const presetOptions = [
+  { id: '7d', label: '7D', days: 7 },
   { id: '30d', label: '30D', days: 30 },
   { id: '90d', label: '90D', days: 90 },
   { id: '180d', label: '180D', days: 180 },
@@ -87,11 +88,11 @@ const userSearch = ref('')
 const usersLoading = ref(false)
 const usersError = ref<string | null>(null)
 
-const selectedMetricIds = ref<string[]>(['activity-overview', 'first-ai-interaction', 'first-transaction', 'ai-response-decisions', 'ai-reply-rate', 'ai-escalation-rate'])
+const selectedMetricIds = ref<string[]>(['activity-overview'])
 const selectedUserIds = ref<string[]>([])
 const startDate = ref('')
 const endDate = ref('')
-const activePreset = ref<string>('90d')
+const activePreset = ref<string>('7d')
 
 const metricStates = reactive<Record<string, MetricState>>({
   'activity-overview': { loading: false, error: null, data: null },
@@ -126,6 +127,9 @@ let refreshTimeout: ReturnType<typeof setTimeout> | null = null
 let requestVersion = 0
 let requestController: AbortController | null = null
 let ready = false
+let usersRequestVersion = 0
+let usersRefreshTimeout: ReturnType<typeof setTimeout> | null = null
+let selectAllActiveUsers = true
 
 const filteredUsers = computed(() => {
   const query = userSearch.value.trim().toLowerCase()
@@ -174,6 +178,7 @@ const emptyStateMessage = computed(() => {
   }
 
   if (selectedUserIds.value.length === 0) {
+    if (!usersLoading.value && users.value.length === 0) return 'No creators sent messages manually or approved AI drafts in this range.'
     return 'Select at least one user.'
   }
 
@@ -206,19 +211,23 @@ function handleCustomDateChange() {
 }
 
 function toggleUser(userId: string) {
+  selectAllActiveUsers = false
   if (selectedUserIds.value.includes(userId)) {
     selectedUserIds.value = selectedUserIds.value.filter(id => id !== userId)
     return
   }
 
   selectedUserIds.value = [...selectedUserIds.value, userId]
+  selectAllActiveUsers = allUsersSelected.value
 }
 
 function selectAllUsers() {
+  selectAllActiveUsers = true
   selectedUserIds.value = users.value.map(user => user.id)
 }
 
 function deselectAllUsers() {
+  selectAllActiveUsers = false
   selectedUserIds.value = []
 }
 
@@ -232,17 +241,26 @@ function toggleMetric(metricId: string) {
 }
 
 async function fetchUsers() {
+  const version = ++usersRequestVersion
   usersLoading.value = true
   usersError.value = null
 
   try {
-    const data = await $fetch<KpiUserOption[]>(`${config.public.apiBase}/api/kpi/users`)
+    const data = await $fetch<KpiUserOption[]>(`${config.public.apiBase}/api/kpi/users`, {
+      query: { startDate: startDate.value || undefined, endDate: endDate.value || undefined }
+    })
+    if (version !== usersRequestVersion) return
     users.value = data
-    selectedUserIds.value = data.map(user => user.id)
+    selectedUserIds.value = selectAllActiveUsers
+      ? data.map(user => user.id)
+      : selectedUserIds.value.filter(id => data.some(user => user.id === id))
   } catch (error: unknown) {
+    if (version !== usersRequestVersion) return
+    users.value = []
+    selectedUserIds.value = []
     usersError.value = error instanceof Error ? error.message : 'Failed to load users'
   } finally {
-    usersLoading.value = false
+    if (version === usersRequestVersion) usersLoading.value = false
   }
 }
 
@@ -349,7 +367,23 @@ function getEscalationRateMetricData(metricId: string): AiEscalationRateMetric |
   return data as AiEscalationRateMetric
 }
 
-watch([startDate, endDate, selectedUserIds, selectedMetricIds], () => {
+watch([startDate, endDate], () => {
+  if (!ready) return
+  usersRequestVersion++
+  invalidateMetrics()
+  if (usersRefreshTimeout) clearTimeout(usersRefreshTimeout)
+  usersLoading.value = true
+  usersRefreshTimeout = setTimeout(async () => {
+    if (startDate.value && endDate.value && startDate.value > endDate.value) {
+      usersLoading.value = false
+      return
+    }
+    await fetchUsers()
+    if (!usersLoading.value && !usersError.value) await refreshMetrics()
+  }, 180)
+}, { flush: 'sync' })
+
+watch([selectedUserIds, selectedMetricIds], () => {
   if (!ready || usersLoading.value || usersError.value) {
     return
   }
@@ -358,12 +392,14 @@ watch([startDate, endDate, selectedUserIds, selectedMetricIds], () => {
 }, { deep: true, flush: 'sync' })
 
 onMounted(async () => {
-  applyPreset(90, '90d')
+  applyPreset(7, '7d')
   await fetchUsers()
   ready = true
   if (!usersError.value) await refreshMetrics()
 })
 onBeforeUnmount(() => {
+  usersRequestVersion++
+  if (usersRefreshTimeout) clearTimeout(usersRefreshTimeout)
   requestVersion++
   requestController?.abort()
   if (refreshTimeout) clearTimeout(refreshTimeout)
@@ -625,7 +661,11 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <KpiNumberStatistics class="lg:col-start-2" />
+        <KpiNumberStatistics
+          :start-date="startDate"
+          :end-date="endDate"
+          class="lg:col-start-2"
+        />
       </section>
     </div>
   </main>
