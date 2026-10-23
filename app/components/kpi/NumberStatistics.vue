@@ -91,7 +91,7 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
         WhatsApp &amp; numbers
       </h2>
       <p class="text-sm text-zinc-500 mt-1">
-        Current Whapi inventory · Date filter applies to authorization losses · Updated once daily.
+        Current numbers · Date filter applies to authorization losses · Updated once daily.
       </p>
     </div>
     <div
@@ -142,10 +142,10 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
       <article class="kpi-panel p-5 space-y-5">
         <div>
           <h3 class="font-medium">
-            Number pipeline · Whapi
+            Number pipeline
           </h3>
           <p class="text-sm text-zinc-500 mt-2">
-            {{ data.pipeline.total }} channels listed by Whapi.
+            {{ data.pipeline.total }} channels.
             <template v-if="data.pipeline.knownNumbers !== undefined">
               {{ data.pipeline.knownNumbers }} unique phone numbers reported; {{ data.pipeline.withoutPhone }} channels without a reported number.
             </template>
@@ -166,7 +166,7 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
           <span class="tabular-nums">{{ stage.count }}</span>
         </div>
         <p class="text-sm text-zinc-500">
-          Whapi health snapshot · {{ data.updatedAt }}. Refreshed once daily. Warm-up assignments come from SoloOne.
+          Connection status · {{ data.updatedAt }}. Refreshed once daily.
         </p>
         <table class="w-full text-sm">
           <thead>
