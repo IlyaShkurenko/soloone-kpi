@@ -11,7 +11,7 @@ const maximum = computed(() => Math.max(1, ...props.points.map(point => point.va
     <div
       class="flex items-end gap-2 h-20 mt-5"
       role="img"
-      aria-label="Weekly trend"
+      aria-label="Trend over the selected period"
     >
       <div
         v-for="(point, index) in points"

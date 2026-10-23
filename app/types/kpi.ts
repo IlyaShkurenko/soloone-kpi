@@ -216,6 +216,7 @@ export interface ActivityPeriod {
 
 export interface ActivityOverviewMetric {
   metricId: 'activity-overview'
+  granularity: 'day' | 'week' | 'month'
   current: ActivityPeriod
   previous: ActivityPeriod
   series: ActivityPeriod[]
@@ -224,6 +225,8 @@ export interface ActivityOverviewMetric {
 export interface NumberStatistics {
   startDate: string
   endDate: string
+  granularity: 'day' | 'week' | 'month'
+  series: Array<{ startDate: string, endDate: string, count: number | null }>
   updatedAt: string
   history: { available: boolean, from: string | null, through: string | null, checkedAt: string, partial: boolean }
   authorizationLosses: number | null

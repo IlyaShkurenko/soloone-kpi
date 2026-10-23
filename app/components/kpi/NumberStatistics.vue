@@ -74,6 +74,10 @@ const pipeline = computed(() => data.value
       { label: 'Outside warm-up · ready + active', count: data.value.pipeline.nonWarming }
     ]
   : [])
+const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
+  label: period.startDate === period.endDate ? period.startDate : `${period.startDate} – ${period.endDate}`,
+  value: period.count
+})))
 </script>
 
 <template>
@@ -237,6 +241,18 @@ const pipeline = computed(() => data.value
         <p class="text-xs text-zinc-500">
           Source: retained server state log. Explicit disconnects and temporary starting/creating states are excluded. Warm-up groups use current assignments.
         </p>
+      </article>
+      <article
+        v-if="data.history.available && lossTrend.length"
+        class="kpi-panel p-5"
+      >
+        <h3 class="font-medium">
+          Authorization losses over time
+        </h3>
+        <p class="text-sm text-zinc-500 mt-2">
+          Each bar shows {{ data.granularity === 'month' ? 'a calendar month' : data.granularity === 'day' ? 'a day' : 'a week' }} within the selected range. Edge periods may be partial.
+        </p>
+        <KpiSparkBars :points="lossTrend" />
       </article>
     </template>
   </section>

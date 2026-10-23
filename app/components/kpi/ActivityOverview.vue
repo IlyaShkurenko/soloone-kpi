@@ -71,7 +71,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
           Activity overview · {{ periodLabel(data.current) }}
         </h2>
         <p class="text-sm text-zinc-500 mt-1">
-          Totals cover the selected date range · Bars show weeks within this range
+          Totals cover the selected date range · Bars show {{ data.granularity === 'month' ? 'months' : data.granularity === 'day' ? 'days' : 'weeks' }} within this range
         </p>
       </div>
 
@@ -221,7 +221,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
           Trend: share by outcome
         </h3>
         <p class="text-sm text-zinc-500 mt-2">
-          The three categories add up to 100% before rounding. Empty weeks have no bar.
+          The three categories add up to 100% before rounding. Empty periods have no bar.
         </p>
         <p
           v-if="data.series.some(period => period.automation.unclassified > 0)"
@@ -248,7 +248,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
             <div
               class="flex gap-2 h-48 border-b border-black/10"
               role="img"
-              aria-label="Weekly automation outcome distribution"
+              aria-label="Automation outcome distribution over time"
             >
               <div
                 v-for="period in data.series"
