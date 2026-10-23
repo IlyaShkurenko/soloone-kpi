@@ -32,6 +32,19 @@ function periodLabel(period: ActivityPeriod) {
 function percent(value: number | null) {
   return value === null ? '—' : `${(value * 100).toFixed(1)}%`
 }
+function automationPercent(period: ActivityPeriod, category: typeof categories[number]['count']) {
+  const total = period.automation.total
+  if (!total) return '—'
+  // Allocate tenths by largest remainder so displayed shares total exactly 100%.
+  const shares = categories.map(({ count }) => {
+    const scaled = period.automation[count] * 1000
+    return { count, tenths: Math.floor(scaled / total), remainder: scaled % total }
+  })
+  const missing = 1000 - shares.reduce((sum, share) => sum + share.tenths, 0)
+  const ranked = [...shares].sort((a, b) => b.remainder - a.remainder)
+  for (let i = 0; i < missing; i++) ranked[i]!.tenths++
+  return `${(shares.find(share => share.count === category)!.tenths / 10).toFixed(1)}%`
+}
 function money(value: number | null, currency: string) {
   if (value === null) return '—'
   return new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 2 }).format(value / 100)
@@ -210,7 +223,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
             {{ category.description }}
           </p>
           <p class="text-3xl font-semibold text-teal-700 tabular-nums mt-4">
-            {{ percent(data.current.automation[category.key]) }}
+            {{ automationPercent(data.current, category.count) }}
           </p>
           <p class="text-xs text-zinc-500 mt-2">
             {{ data.current.automation[category.count] }} outcomes
@@ -222,7 +235,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
           Trend: share by outcome
         </h3>
         <p class="text-sm text-zinc-500 mt-2">
-          The three categories add up to 100% before rounding. Empty periods have no bar.
+          The three categories add up to 100%. Empty periods have no bar.
         </p>
         <p
           v-if="data.series.some(period => period.automation.unclassified > 0)"
@@ -273,7 +286,7 @@ function channelShare(period: ActivityPeriod, channel: string) {
                     :key="category.key"
                     class="mt-1"
                   >
-                    {{ category.label }}: {{ percent(period.automation[category.key]) }} ({{ period.automation[category.count] }})
+                    {{ category.label }}: {{ automationPercent(period, category.count) }} ({{ period.automation[category.count] }})
                   </p>
                   <p
                     v-if="period.automation.unclassified"
