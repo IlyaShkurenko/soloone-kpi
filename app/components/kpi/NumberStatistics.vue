@@ -71,7 +71,8 @@ const cards = computed(() => data.value
 const pipeline = computed(() => data.value
   ? [
       { label: 'Assigned to warm-up', count: data.value.pipeline.warming },
-      { label: 'Outside warm-up · ready + active', count: data.value.pipeline.nonWarming }
+      { label: 'Outside warm-up · ready', count: data.value.pipeline.nonWarming },
+      ...(data.value.pipeline.unassigned ? [{ label: 'No SoloOne assignment', count: data.value.pipeline.unassigned }] : [])
     ]
   : [])
 const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
@@ -90,7 +91,7 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
         WhatsApp &amp; numbers
       </h2>
       <p class="text-sm text-zinc-500 mt-1">
-        All registered Whapi channels · Date filter applies to authorization losses · Updated once daily.
+        Current Whapi inventory · Date filter applies to authorization losses · Updated once daily.
       </p>
     </div>
     <div
@@ -141,10 +142,13 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
       <article class="kpi-panel p-5 space-y-5">
         <div>
           <h3 class="font-medium">
-            Number pipeline · current
+            Number pipeline · Whapi
           </h3>
           <p class="text-sm text-zinc-500 mt-2">
-            {{ data.pipeline.total }} registered channels. Purchased SIMs without a registered channel are not included.
+            {{ data.pipeline.total }} channels listed by Whapi.
+            <template v-if="data.pipeline.knownNumbers !== undefined">
+              {{ data.pipeline.knownNumbers }} unique phone numbers reported; {{ data.pipeline.withoutPhone }} channels without a reported number.
+            </template>
           </p>
         </div>
         <div
@@ -162,7 +166,7 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
           <span class="tabular-nums">{{ stage.count }}</span>
         </div>
         <p class="text-sm text-zinc-500">
-          Current saved connection states; this is not a live Whapi health check or a historical snapshot.
+          Whapi health snapshot · {{ data.updatedAt }}. Refreshed once daily. Warm-up assignments come from SoloOne.
         </p>
         <table class="w-full text-sm">
           <thead>
@@ -173,6 +177,11 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
                 Warming
               </th><th class="text-right">
                 Outside warm-up
+              </th><th
+                v-if="data.pipeline.unassigned"
+                class="text-right"
+              >
+                Unassigned
               </th>
             </tr>
           </thead>
@@ -188,6 +197,11 @@ const lossTrend = computed(() => (data.value?.series ?? []).map(period => ({
                 {{ row.warming }}
               </td><td class="text-right tabular-nums">
                 {{ row.nonWarming }}
+              </td><td
+                v-if="data.pipeline.unassigned"
+                class="text-right tabular-nums"
+              >
+                {{ row.unassigned }}
               </td>
             </tr>
           </tbody>

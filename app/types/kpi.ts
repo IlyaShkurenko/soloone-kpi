@@ -233,7 +233,7 @@ export interface NumberStatistics {
   affectedNumbers: number | null
   nonWarmingAffected: number | null
   nonWarmingRate: number | null
-  pipeline: { total: number, warming: number, nonWarming: number }
-  connectionStatus: Array<{ id: string, label: string, warming: number, nonWarming: number }>
+  pipeline: { total: number, warming: number, nonWarming: number, unassigned: number, knownNumbers: number, withoutPhone: number }
+  connectionStatus: Array<{ id: string, label: string, warming: number, nonWarming: number, unassigned: number }>
   daily: Array<{ date: string, count: number }>
 }
