@@ -26,6 +26,7 @@ function shortDate(value: string) {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
 }
 function periodLabel(period: ActivityPeriod) {
+  if (period.startDate === period.endDate) return shortDate(period.startDate)
   return `${shortDate(period.startDate)} – ${shortDate(period.endDate)}`
 }
 function percent(value: number | null) {
