@@ -448,9 +448,6 @@ onBeforeUnmount(() => {
         <p class="mt-2 text-3xl font-semibold text-teal-700 tabular-nums">
           10
         </p>
-        <p class="mt-1 text-xs text-zinc-500">
-          Total · independent of date range
-        </p>
       </article>
 
       <section class="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
