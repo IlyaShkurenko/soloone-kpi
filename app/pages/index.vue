@@ -438,6 +438,21 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
+      <article
+        class="kpi-panel rounded-xl px-5 py-4 sm:max-w-xs"
+        aria-label="Onboarded users"
+      >
+        <h2 class="text-sm font-medium text-zinc-500">
+          Onboarded users
+        </h2>
+        <p class="mt-2 text-3xl font-semibold text-teal-700 tabular-nums">
+          10
+        </p>
+        <p class="mt-1 text-xs text-zinc-500">
+          Total · independent of date range
+        </p>
+      </article>
+
       <section class="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside class="space-y-6">
           <section class="kpi-panel rounded-xl px-5 py-5 space-y-4">
