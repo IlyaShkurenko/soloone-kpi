@@ -22,3 +22,25 @@ This Nuxt application owns the public SoloOne KPI dashboard backed by the main b
 ## Validation
 
 - Run `pnpm lint`, `pnpm typecheck`, and `pnpm build` for normal application changes.
+
+## Quality and security gate
+
+These rules apply to every change, by a person or an agent. `.claude/README.md` describes the agents and the guard
+that enforce them.
+
+- **Done means the gate is green.** `pnpm run gate` runs the type check, the linter and the secret scan. There are
+  no tests yet: the change that adds the first test also adds a `test` script (node's test runner, as in the other
+  SoloOne apps) and puts it in the gate. Run the whole gate, not just the file you touched: a fix in one place must not
+  break another. CI (`.github/workflows/ci.yml`) runs the same gate on every push and pull request.
+- **Test first.** A feature or a bug fix starts with a test of the behavior that fails on the current code
+  (`pnpm run fails-first -- <files>`), then the code that makes it pass. A bug fix always comes with the test that
+  reproduces the bug.
+- **Who writes what.** For anything beyond a one-line fix, the `test-writer` agent writes the tests and the `builder`
+  agent writes the code; the builder doesn't change the tests. The `verifier` checks the result. Changes to sign-in,
+  payments, wallets, deposits, personal data, webhooks or secrets also get the `security-reviewer`, and their tests
+  get 2 to 4 `critic` runs.
+- **Secrets.** Never open, print or commit `.env` files or keys. Configuration is read by variable name; the names are
+  in SECURITY.md. A secret that reached git is rotated, not just deleted.
+- **Test data is fictional.** Emails at example.com or example.test, phones 447700900000 to 447700900999, invented
+  names. No real customer, creator or phone number in code, tests, fixtures or docs.
+- **Logs** carry IDs and outcomes, never tokens, message text, phone numbers or emails.

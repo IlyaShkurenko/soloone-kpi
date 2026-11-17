@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+# Known false positives, each with a reason. None so far. gitleaks refuses an empty [allowlist] table, so add the
+# table only together with its first entry:
+# [allowlist]
+# description = "Known false positives, each with a reason"
+# regexes = [...]   # with a comment saying why each one is not a secret
+# commits = [...]   # a past commit whose finding is a false positive, with the reason

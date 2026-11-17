@@ -8,7 +8,13 @@
     "preview": "PORT=9003 nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "fails-first": "node scripts/fails-first.mjs",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "gate": "pnpm run typecheck && pnpm run lint && pnpm run secret-scan"
+  },
+  "config": {
+    "failsFirstCommand": "node --experimental-strip-types --test"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.82",
